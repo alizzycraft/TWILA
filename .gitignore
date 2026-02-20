@@ -4,3 +4,6 @@ dist/
 .DS_Store
 .vscode/
 .idea/
+/.gradle
+/build/libs
+/build

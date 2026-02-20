@@ -1,3 +1,16 @@
+buildscript {
+    repositories {
+        maven {
+            name = 'Fabric'
+            url = 'https://maven.fabricmc.net/'
+        }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'fabric-loom:fabric-loom.gradle.plugin:1.13-SNAPSHOT'
+    }
+}
+
 plugins {
     id 'fabric-loom' version '1.13-SNAPSHOT'
     id 'java'
@@ -28,11 +41,8 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     
-    // Fabric API
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-    
-    // Tapestry dependency
-    modImplementation "com.tapestry:tapestry:${project.tapestry_version}"
+    // Tapestry dependency - bundle into JAR and compile classpath
+    implementation files("../tapestry/build/libs/tapestry-0.0.1.jar")
     
     // Testing
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
@@ -64,22 +74,6 @@ test {
     useJUnitPlatform()
 }
 
-// Task to build TypeScript before Java compilation
-task buildTypeScript {
-    description = 'Builds TypeScript source files'
-    group = 'build'
-    
-    doLast {
-        exec {
-            commandLine 'npm', 'run', 'build'
-            workingDir projectDir
-        }
-    }
-}
-
-// Make Java compilation depend on TypeScript build
-compileJava.dependsOn buildTypeScript
-
 // Task to create a complete mod package
 task packageMod {
     description = 'Creates a complete mod package with TypeScript output'
@@ -92,6 +86,18 @@ task packageMod {
             into 'build/resources/main'
         }
     }
+}
+
+// Configure jar to create standard JAR
+jar {
+    from 'build/resources/main'
+    archiveClassifier = ''
+    manifest {
+        attributes(
+            'Main-Class': 'com.twila.TwilaExtension'
+        )
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 // Make packageMod run before jar

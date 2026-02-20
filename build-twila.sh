@@ -2,13 +2,7 @@
 
 echo "Building TWILA Mod..."
 cd twila
-npm install
-if [ $? -ne 0 ]; then
-    echo "npm install failed!"
-    exit 1
-fi
-
-npm run build
+tsc --project ./tsconfig.json
 if [ $? -ne 0 ]; then
     echo "TypeScript build failed!"
     exit 1

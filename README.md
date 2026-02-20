@@ -4,7 +4,7 @@ A client-side block identification overlay mod for the Tapestry platform.
 
 ## Overview
 
-TWILA provides real-time identification of blocks under your reticle using client-side raycasting. Built entirely on the Tapestry TypeScript-first modding framework, which provides explicit lifecycle management and safe API boundaries.
+TWILA provides real-time identification of blocks under your reticle using client-side raycasting. Built entirely on Tapestry TypeScript-first modding framework, which provides explicit lifecycle management and safe API boundaries.
 
 ## Features
 
@@ -52,9 +52,10 @@ Tapestry's enforced phases ensure TWILA operates safely:
 
 ```bash
 # Copy built JARs to Minecraft mods folder
-cp tapestry/build/libs/tapestry-*.jar ~/.minecraft/mods/
 cp twila/build/libs/twila-*.jar ~/.minecraft/mods/
 ```
+
+**Note**: This only installs TWILA. You'll also need to build and install the Tapestry platform separately.
 
 ## Development
 
@@ -81,26 +82,27 @@ twila/
 ### Building TWILA
 
 #### Prerequisites
-- Node.js 18+ for TypeScript compilation
+- Node.js 18+ for TypeScript compilation (global installation preferred)
 - Gradle 8.0+ for Java build
+- Global TypeScript compiler (`tsc`) for npm-free builds
 
 #### Build Commands
 
 ```bash
-# Install dependencies
+# Install dependencies (if using local npm)
 npm install
 
-# Build TypeScript
-npm run build
+# Build TypeScript (using global tsc)
+tsc --project ./tsconfig.json
 
 # Build JAR (includes TypeScript output)
 ./gradlew build
 
 # One-command build (Windows)
-..\build-all.bat
+./build-twila.bat
 
 # One-command build (Linux/Mac)
-chmod +x ../build-all.sh && ../build-all.sh
+chmod +x ./build-twila.sh && ./build-twila.sh
 ```
 
 ### Tapestry Platform Building
@@ -202,9 +204,9 @@ Future versions may include configuration options.
    - Check overlay anchor and visibility
 
 3. **Build Failures**
-   - Run `npm install` for TypeScript dependencies
+   - Install TypeScript globally: `npm install -g typescript`
    - Clean with `./gradlew clean build`
-   - Verify Node.js version 18+
+   - Verify TypeScript compiler is available: `tsc --version`
 
 ### Debug Information
 
