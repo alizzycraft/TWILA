@@ -1,0 +1,17 @@
+{
+  "name": "twila",
+  "version": "1.0.0",
+  "description": "TWILA - That's What I'm Looking At",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "@types/node": "^20.0.0"
+  },
+  "dependencies": {
+    "tapestry": "*"
+  }
+}

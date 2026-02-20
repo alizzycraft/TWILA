@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "twila",
+  "version": "1.0.0",
+  "name": "TWILA - That's What I'm Looking At",
+  "description": "Client-side block identification overlay",
+  "authors": ["TWILA Team"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "tapestry:extension": [
+      "com.twila.TwilaExtension"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "tapestry": "*"
+  }
+}
