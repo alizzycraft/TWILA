@@ -52,25 +52,18 @@ function registerOverlay(mod: any) {
         return [];
       }
       
-      // Use Mikel template for UI
-      const template = `
-        <div class="twila-overlay" style="
-          background: rgba(0, 0, 0, 0.7);
-          border-radius: 6px;
-          padding: 6px 12px;
-          margin-top: 20px;
-        ">
-          <span style="
-            color: white;
-            font-family: monospace;
-            font-size: 14px;
-          ">${currentTarget.blockName}</span>
-        </div>
-      `;
-      
-      return tapestry.client.overlay.template(template, {
-        blockName: currentTarget.blockName
-      });
+      // Return proper UINode structure
+      return {
+        type: "box",
+        padding: 6,
+        children: [
+          {
+            type: "text",
+            content: currentTarget.blockName,
+            fontSize: 14
+          }
+        ]
+      };
     }
   };
   

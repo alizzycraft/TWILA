@@ -98,12 +98,50 @@ tsc --project ./tsconfig.json
 # Build JAR (includes TypeScript output)
 ./gradlew build
 
-# One-command build (Windows)
-./build-twila.bat
+# One-command build (Windows) - Interactive
+./build-all.bat
 
-# One-command build (Linux/Mac)
-chmod +x ./build-twila.sh && ./build-twila.sh
+# One-command build (Linux/Mac) - Interactive
+chmod +x ./build-all.sh && ./build-all.sh
+
+# Debug build (Windows) - Enhanced logging
+./build-debug.bat
+
+# Debug build (Linux/Mac) - Enhanced logging  
+chmod +x ./build-debug.sh && ./build-debug.sh
 ```
+
+### Debug Mode
+
+For troubleshooting mod loading issues, use debug builds which provide:
+
+#### TWILA Debug Features
+- **Enhanced console logging** with 🔍 TWILA-DEBUG prefix
+- **API availability checks** for all Tapestry components
+- **Detailed error reporting** with timestamps
+- **Test overlay** with high visibility and distinctive styling
+- **Raycast testing** with JSON output
+
+#### Tapestry Debug Features
+- **Platform-level debugging** for core Tapestry functionality
+- **Enhanced error reporting** for mod loading issues
+- **Development logging** for API interactions
+
+#### JAR Naming
+- **Normal builds**: `twila-1.0.0.jar`, `tapestry-0.0.1.jar`
+- **Debug builds**: `twila-1.0.0-debug.jar`, `tapestry-0.0.1-debug.jar`
+
+Debug logs appear in Minecraft console with `🔍 TWILA-DEBUG:` prefix, making them easy to spot among other log messages.
+
+### Build Options
+
+The interactive build system (`build-all.bat`) offers several options:
+
+1. **Normal build** - Standard release builds
+2. **Debug build** - TWILA with enhanced logging
+3. **Tapestry debug only** - Platform debug version
+4. **TWILA debug only** - Mod debug version only
+5. **Both debug** - Full debug stack (Tapestry + TWILA)
 
 ### Tapestry Platform Building
 
@@ -226,7 +264,7 @@ TWILA logs to console:
 
 ## License
 
-MIT License - see LICENSE file for details.
+AGPL-3.0 License - see LICENSE file for details.
 
 ## Credits
 
