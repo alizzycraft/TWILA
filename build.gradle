@@ -41,8 +41,8 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     
-    // Tapestry dependency - bundle into JAR and compile classpath
-    implementation files("../tapestry/build/libs/tapestry-0.0.1.jar")
+    // Tapestry dependency - for compilation only, not bundled
+    compileOnly files("../tapestry/build/libs/tapestry-0.2.3.jar")
     
     // Testing
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
@@ -122,6 +122,9 @@ task packageMod {
     group = 'build'
     dependsOn compileTypeScript
     
+    // Declare outputs so Gradle can track when task needs to run
+    outputs.dir('build/resources/main/assets/tapestry/mods')
+    
     doLast {
         // Copy TypeScript output to resources for inclusion
         copy {
@@ -132,9 +135,10 @@ task packageMod {
     }
 }
 
-// Configure remapJar to create proper Fabric mod JAR
-remapJar {
+// Configure jar to create proper Fabric mod JAR
+jar {
     dependsOn packageMod
+    inputs.files(packageMod.outputs.files)
     from 'build/resources/main'
     archiveClassifier = ''
     manifest {
@@ -144,3 +148,11 @@ remapJar {
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+
+// Configure remapJar for Fabric Loom - let it handle dependencies automatically
+remapJar {
+    dependsOn packageMod
+}
+
+// Make the default build task include TypeScript compilation
+build.dependsOn packageMod

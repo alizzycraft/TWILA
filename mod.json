@@ -1,8 +1,5 @@
 {
   "id": "twila",
   "version": "1.0.0",
-  "entry": "dist/index.js",
-  "dependsOn": [
-    "tapestry"
-  ]
+  "entry": "dist/index.js"
 }
