@@ -74,22 +74,67 @@ test {
     useJUnitPlatform()
 }
 
-// Task to create a complete mod package
-task packageMod {
-    description = 'Creates a complete mod package with TypeScript output'
+// Task to compile TypeScript using global TypeScript compiler
+task compileTypeScript {
+    description = 'Compiles TypeScript to JavaScript using global TypeScript compiler'
     group = 'build'
     
+    inputs.dir('src')
+    outputs.dir('dist')
+    
     doLast {
-        // Copy TypeScript output to resources for inclusion
-        copy {
-            from 'dist'
-            into 'build/resources/main'
+        // Try to find tsc in common locations
+        def tscCommand = null
+        
+        // Try common npm global locations
+        def npmGlobal = System.getProperty('user.home') + '/AppData/Roaming/npm/tsc.cmd'
+        def programFiles = System.getenv('ProgramFiles') + '/nodejs/tsc.cmd'
+        def programFilesX86 = System.getenv('ProgramFiles(x86)') + '/nodejs/tsc.cmd'
+        
+        if (file(npmGlobal).exists()) {
+            tscCommand = npmGlobal
+        } else if (file(programFiles).exists()) {
+            tscCommand = programFiles
+        } else if (file(programFilesX86).exists()) {
+            tscCommand = programFilesX86
+        } else {
+            // Fallback to just 'tsc' (should be in PATH)
+            tscCommand = 'tsc'
+        }
+        
+        println "Using TypeScript compiler: ${tscCommand}"
+        
+        def result = exec {
+            commandLine tscCommand
+            workingDir projectDir
+            ignoreExitValue = true
+        }
+        
+        if (result.exitValue != 0) {
+            throw new GradleException("TypeScript compilation failed with exit code ${result.exitValue}")
         }
     }
 }
 
-// Configure jar to create standard JAR
-jar {
+// Task to create a complete mod package
+task packageMod {
+    description = 'Creates a complete mod package with TypeScript output'
+    group = 'build'
+    dependsOn compileTypeScript
+    
+    doLast {
+        // Copy TypeScript output to resources for inclusion
+        copy {
+            from 'dist/index.js'
+            into 'build/resources/main/assets/tapestry/mods'
+            rename { 'twila.js' }
+        }
+    }
+}
+
+// Configure remapJar to create proper Fabric mod JAR
+remapJar {
+    dependsOn packageMod
     from 'build/resources/main'
     archiveClassifier = ''
     manifest {
@@ -99,6 +144,3 @@ jar {
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
-
-// Make packageMod run before jar
-jar.dependsOn packageMod

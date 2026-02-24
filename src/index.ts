@@ -1,15 +1,15 @@
-import { TapestryObject, ModDefinition } from "tapestry";
+declare var tapestry: any;
 
 /**
  * TWILA - That's What I'm Looking At
  * 
  * Client-side block identification overlay mod for Tapestry
  */
-const twilaMod: ModDefinition = {
+const twilaMod = {
   id: "twila",
-  onLoad(tapestry: TapestryObject) {
+  onLoad(tapestry: any) {
     // Initialize mod during TS_READY phase
-    console.log("TWILA loading...");
+    tapestry.log("TWILA loading...");
     
     // Store mod reference for later use
     (globalThis as any).twilaMod = {
@@ -20,17 +20,25 @@ const twilaMod: ModDefinition = {
       isVisible: false
     };
   },
-  onEnable(tapestry: TapestryObject) {
-    // Start mod during RUNTIME phase
-    console.log("TWILA enabled");
-    
-    const mod = (globalThis as any).twilaMod;
-    
-    // Register overlay
-    registerOverlay(mod);
-    
-    // Start raycasting loop
-    startRaycasting(mod);
+  
+  // Move onEnable to top level so Tapestry can find it
+  onEnable(tapestry: any) {
+    // Register event listener for client presentation ready
+    tapestry.mod.on("platform", "engine:runtimeStart", () => {
+      tapestry.log("=== TWILA: engine:runtimeStart EVENT RECEIVED ===");
+      tapestry.log("TWILA: Client presentation ready - initializing overlay and raycasting");
+      
+      try {
+        // Register overlay
+        registerOverlay((globalThis as any).twilaMod);
+        
+        // Start raycasting loop
+        startRaycasting((globalThis as any).twilaMod);
+        
+      } catch (error) {
+        tapestry.log(`TWILA: Client initialization error: ${error.toString()}`);
+      }
+    });
   }
 };
 
@@ -46,29 +54,21 @@ function registerOverlay(mod: any) {
     zIndex: 100,
     visible: false,
     render: function() {
-      const currentTarget = mod.currentTarget;
-      
-      if (!currentTarget) {
-        return [];
+      if (mod.currentTarget) {
+        return {
+          type: "text",
+          text: `Looking at: ${mod.currentTarget.blockName}`,
+          color: 0xFFFFFF,
+          x: 10,
+          y: 10
+        };
       }
-      
-      // Return proper UINode structure
-      return {
-        type: "box",
-        padding: 6,
-        children: [
-          {
-            type: "text",
-            content: currentTarget.blockName,
-            fontSize: 14
-          }
-        ]
-      };
+      return null;
     }
   };
   
   tapestry.client.overlay.register(overlayDefinition);
-  console.log("TWILA overlay registered");
+  tapestry.log("TWILA overlay registered");
 }
 
 /**
@@ -79,47 +79,57 @@ function startRaycasting(mod: any) {
   
   const raycastLoop = function(context: any) {
     try {
-      // Perform client-side raycast
-      const result = tapestry.client.players.raycastBlock({
-        maxDistance: 32,
-        includeFluids: false
-      });
-      
-      let newTarget = null;
-      
-      if (result.hit) {
-        // Extract block name using the defined contract
-        const blockName = result.blockName || result.blockId || "Unknown Block";
+      // Get player position and look direction per spec
+      const player = tapestry.client.players.getLocal();
+      if (player && player.position && player.look) {
+        const position = player.position;
+        const look = player.look;
         
-        newTarget = {
-          blockId: result.blockId,
-          blockName: blockName,
-          blockPos: result.blockPos,
-          side: result.side
-        };
-      }
-      
-      // Check if target changed
-      const targetChanged = !mod.currentTarget || 
-        !newTarget || 
-        mod.currentTarget.blockId !== newTarget.blockId;
-      
-      if (targetChanged) {
-        mod.currentTarget = newTarget;
-        updateOverlayVisibility(mod);
+        // Raycast with options per spec
+        const result = tapestry.client.players.raycastBlock({
+          maxDistance: 32.0,
+          includeFluids: false,
+          includeEntities: false
+        });
+        
+        if (result && result.hit) {
+          // Extract block name using contract order per spec
+          let blockName = "Unknown Block";
+          
+          if (result.blockName && typeof result.blockName === 'string') {
+            blockName = result.blockName;
+          } else if (result.blockId && typeof result.blockId === 'string') {
+            blockName = result.blockId;
+          }
+          
+          mod.currentTarget = { blockName };
+          updateOverlayVisibility(mod);
+          tapestry.log(`TWILA: Looking at: ${blockName}`);
+        } else {
+          mod.currentTarget = null;
+          updateOverlayVisibility(mod);
+          tapestry.log("TWILA: No block in sight");
+        }
+      } else {
+        tapestry.log("TWILA: ERROR - Could not get player position/look");
       }
       
     } catch (error) {
-      console.error("TWILA raycast error:", error);
+      tapestry.log(`TWILA: Raycast error: ${error.toString()}`);
     }
     
-    // Schedule next tick
-    mod.tickHandle = tapestry.scheduler.nextTick(raycastLoop);
+    // Schedule next tick using scheduler per spec
+    if (typeof tapestry.scheduler !== 'undefined' && tapestry.scheduler.nextTick) {
+      tapestry.scheduler.nextTick(raycastLoop);
+    } else {
+      // Fallback to simple timeout
+      tapestry.log("TWILA: Scheduler not available - raycasting will stop");
+    }
   };
   
-  // Start the loop
+  // Start loop
   mod.tickHandle = tapestry.scheduler.nextTick(raycastLoop);
-  console.log("TWILA raycasting started");
+  tapestry.log("TWILA raycasting started");
 }
 
 /**
@@ -133,15 +143,15 @@ function updateOverlayVisibility(mod: any) {
     // Show overlay
     tapestry.client.overlay.setVisible("twila", mod.overlayId, true);
     mod.isVisible = true;
-    console.log("TWILA overlay shown:", mod.currentTarget?.blockName);
+    tapestry.log("TWILA overlay shown:", mod.currentTarget?.blockName);
   } else if (!hasTarget && mod.isVisible) {
     // Hide overlay
     tapestry.client.overlay.setVisible("twila", mod.overlayId, false);
     mod.isVisible = false;
-    console.log("TWILA overlay hidden");
+    tapestry.log("TWILA overlay hidden");
   }
 }
 
 // Register mod with Tapestry
-console.log("TWILA mod definition loaded");
+tapestry.log("TWILA mod definition loaded");
 tapestry.mod.define(twilaMod);
