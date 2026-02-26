@@ -111,7 +111,7 @@ task compileTypeScript {
         }
         
         if (result.exitValue != 0) {
-            throw new GradleException("TypeScript compilation failed with exit code ${result.exitValue}")
+            throw new Exception("TypeScript compilation failed with exit code ${result.exitValue}")
         }
     }
 }

@@ -7,38 +7,61 @@ declare var tapestry: any;
  */
 const twilaMod = {
   id: "twila",
-  onLoad(tapestry: any) {
-    // Initialize mod during TS_READY phase
-    tapestry.log("TWILA loading...");
-    
-    // Store mod reference for later use
-    (globalThis as any).twilaMod = {
-      tapestry,
-      currentTarget: null,
-      overlayId: "twila-overlay",
-      tickHandle: null,
-      isVisible: false
-    };
+  version: "1.0.0",
+  activate: function(tapestry: any) {
+    try {
+      // Initialize mod during TS_ACTIVATE phase
+      console.log("=== TWILA ACTIVATE START ===");
+      console.log("TWILA loading...");
+      
+      // Store mod reference for later use
+      (globalThis as any).twilaMod = {
+        tapestry,
+        currentTarget: null,
+        overlayId: "twila-overlay",
+        tickHandle: null,
+        isVisible: false
+      };
+      
+      console.log("TWILA: Mod reference stored");
+      
+      // Register event listener for client presentation ready
+      tapestry.mod.on("platform", "engine:runtimeStart", () => {
+        console.log("=== TWILA: engine:runtimeStart EVENT RECEIVED ===");
+        console.log("TWILA: Client presentation ready - initializing overlay and raycasting");
+        
+        try {
+          // Register overlay
+          registerOverlay((globalThis as any).twilaMod);
+          
+          // Start raycasting loop
+          startRaycasting((globalThis as any).twilaMod);
+          
+        } catch (error) {
+          console.log(`TWILA: Client initialization error: ${error.toString()}`);
+        }
+      });
+      
+      console.log("TWILA activate function completed successfully");
+      console.log("=== TWILA ACTIVATE END ===");
+      
+    } catch (error) {
+      console.log("=== TWILA ACTIVATE ERROR ===");
+      console.log(`TWILA: Activate function error: ${error.toString()}`);
+      console.log(`TWILA: Error stack: ${error.stack || 'No stack available'}`);
+      console.log("=== END TWILA ACTIVATE ERROR ===");
+    }
   },
   
-  // Move onEnable to top level so Tapestry can find it
-  onEnable(tapestry: any) {
-    // Register event listener for client presentation ready
-    tapestry.mod.on("platform", "engine:runtimeStart", () => {
-      tapestry.log("=== TWILA: engine:runtimeStart EVENT RECEIVED ===");
-      tapestry.log("TWILA: Client presentation ready - initializing overlay and raycasting");
-      
-      try {
-        // Register overlay
-        registerOverlay((globalThis as any).twilaMod);
-        
-        // Start raycasting loop
-        startRaycasting((globalThis as any).twilaMod);
-        
-      } catch (error) {
-        tapestry.log(`TWILA: Client initialization error: ${error.toString()}`);
-      }
-    });
+  deactivate: function(tapestry: any) {
+    // Cleanup when mod is deactivated
+    console.log("TWILA deactivating...");
+    
+    const mod = (globalThis as any).twilaMod;
+    if (mod && mod.tickHandle) {
+      // Stop raycasting loop
+      mod.tickHandle = null;
+    }
   }
 };
 
@@ -68,7 +91,7 @@ function registerOverlay(mod: any) {
   };
   
   tapestry.client.overlay.register(overlayDefinition);
-  tapestry.log("TWILA overlay registered");
+  console.log("TWILA overlay registered");
 }
 
 /**
@@ -104,18 +127,18 @@ function startRaycasting(mod: any) {
           
           mod.currentTarget = { blockName };
           updateOverlayVisibility(mod);
-          tapestry.log(`TWILA: Looking at: ${blockName}`);
+          console.log(`TWILA: Looking at: ${blockName}`);
         } else {
           mod.currentTarget = null;
           updateOverlayVisibility(mod);
-          tapestry.log("TWILA: No block in sight");
+          console.log("TWILA: No block in sight");
         }
       } else {
-        tapestry.log("TWILA: ERROR - Could not get player position/look");
+        console.log("TWILA: ERROR - Could not get player position/look");
       }
       
     } catch (error) {
-      tapestry.log(`TWILA: Raycast error: ${error.toString()}`);
+      console.log(`TWILA: Raycast error: ${error.toString()}`);
     }
     
     // Schedule next tick using scheduler per spec
@@ -123,13 +146,13 @@ function startRaycasting(mod: any) {
       tapestry.scheduler.nextTick(raycastLoop);
     } else {
       // Fallback to simple timeout
-      tapestry.log("TWILA: Scheduler not available - raycasting will stop");
+      console.log("TWILA: Scheduler not available - raycasting will stop");
     }
   };
   
   // Start loop
   mod.tickHandle = tapestry.scheduler.nextTick(raycastLoop);
-  tapestry.log("TWILA raycasting started");
+  console.log("TWILA raycasting started");
 }
 
 /**
@@ -143,15 +166,15 @@ function updateOverlayVisibility(mod: any) {
     // Show overlay
     tapestry.client.overlay.setVisible("twila", mod.overlayId, true);
     mod.isVisible = true;
-    tapestry.log("TWILA overlay shown:", mod.currentTarget?.blockName);
+    console.log("TWILA overlay shown:", mod.currentTarget?.blockName);
   } else if (!hasTarget && mod.isVisible) {
     // Hide overlay
     tapestry.client.overlay.setVisible("twila", mod.overlayId, false);
     mod.isVisible = false;
-    tapestry.log("TWILA overlay hidden");
+    console.log("TWILA overlay hidden");
   }
 }
 
 // Register mod with Tapestry
-tapestry.log("TWILA mod definition loaded");
 tapestry.mod.define(twilaMod);
+
