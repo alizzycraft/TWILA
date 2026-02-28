@@ -5,176 +5,297 @@ declare var tapestry: any;
  * 
  * Client-side block identification overlay mod for Tapestry
  */
+
+// ======================================================
+// 1. STATE & CONFIGURATION
+// ======================================================
+
+enum TwilaState {
+  INITIALIZING = "INITIALIZING",
+  RUNNING = "RUNNING", 
+  DISABLED = "DISABLED"
+}
+
+let twilaState: TwilaState = TwilaState.INITIALIZING;
+
+// Feature flags for subsystem isolation
+const DEBUG_DISABLE_RAYCAST = false;
+const DEBUG_DISABLE_OVERLAY = false;
+
+// Current target data
+interface TargetData {
+  blockName: string;
+  blockId: string;
+  position: {x: number, y: number, z: number};
+}
+
+let currentTarget: TargetData | null = null;
+
+// ======================================================
+// 2. LIFECYCLE HOOKS
+// ======================================================
+
+function runStartupDiagnostics() {
+  console.log("=== TWILA ENVIRONMENT ===");
+  console.log("scheduler:", !!tapestry.scheduler);
+  console.log("players API:", !!tapestry.client?.players);
+  console.log("overlay API:", !!tapestry.client?.overlay);
+  console.log("events API:", !!tapestry.events);
+  console.log("=========================");
+}
+
+function hookLifecycleEvents() {
+  // Log phase transitions if available
+  if (tapestry.phase && tapestry.phase.onAny) {
+    tapestry.phase.onAny((phase: string) => {
+      console.log("[TWILA] Phase:", phase);
+    });
+  }
+  
+  // Hook into runtime start event
+  if (tapestry.events && tapestry.events.on) {
+    tapestry.events.on("platform", "engine:runtimeStart", () => {
+      console.log("[TWILA] Runtime started - initializing systems");
+      initializeTwilaSystems();
+    });
+  } else {
+    console.log("[TWILA] Events not yet available - will retry");
+  }
+}
+
+function fatal(reason: string, err?: any) {
+  console.error("[TWILA:FATAL]", reason, err);
+  twilaState = TwilaState.DISABLED;
+  // Cleanup resources
+  stopScheduler();
+  hideOverlay();
+}
 const twilaMod = {
   id: "twila",
   version: "1.0.0",
   activate: function(tapestry: any) {
+    console.log("[TWILA] Starting activation...");
+    
     try {
-      // Initialize mod during TS_ACTIVATE phase
-      console.log("=== TWILA ACTIVATE START ===");
-      console.log("TWILA loading...");
-      
-      // Store mod reference for later use
+      // Store tapestry reference
       (globalThis as any).twilaMod = {
         tapestry,
-        currentTarget: null,
-        overlayId: "twila-overlay",
-        tickHandle: null,
-        isVisible: false
+        state: TwilaState.INITIALIZING,
+        overlayId: "twila-overlay"
       };
       
-      console.log("TWILA: Mod reference stored");
+      // Run diagnostics
+      runStartupDiagnostics();
       
-      // Register event listener for client presentation ready
-      tapestry.mod.on("platform", "engine:runtimeStart", () => {
-        console.log("=== TWILA: engine:runtimeStart EVENT RECEIVED ===");
-        console.log("TWILA: Client presentation ready - initializing overlay and raycasting");
-        
-        try {
-          // Register overlay
-          registerOverlay((globalThis as any).twilaMod);
-          
-          // Start raycasting loop
-          startRaycasting((globalThis as any).twilaMod);
-          
-        } catch (error) {
-          console.log(`TWILA: Client initialization error: ${error.toString()}`);
-        }
-      });
+      // Hook into lifecycle
+      hookLifecycleEvents();
       
-      console.log("TWILA activate function completed successfully");
-      console.log("=== TWILA ACTIVATE END ===");
+      console.log("[TWILA] Activation complete");
       
     } catch (error) {
-      console.log("=== TWILA ACTIVATE ERROR ===");
-      console.log(`TWILA: Activate function error: ${error.toString()}`);
-      console.log(`TWILA: Error stack: ${error.stack || 'No stack available'}`);
-      console.log("=== END TWILA ACTIVATE ERROR ===");
+      fatal("Activation failed", error);
     }
   },
   
   deactivate: function(tapestry: any) {
-    // Cleanup when mod is deactivated
-    console.log("TWILA deactivating...");
-    
-    const mod = (globalThis as any).twilaMod;
-    if (mod && mod.tickHandle) {
-      // Stop raycasting loop
-      mod.tickHandle = null;
-    }
-  }
+    console.log("[TWILA] Deactivating...");
+    twilaState = TwilaState.DISABLED;
+    stopScheduler();
+    hideOverlay();
+    console.log("[TWILA] Deactivation complete");
+  },
 };
 
-/**
- * Registers the TWILA overlay with Tapestry
- */
-function registerOverlay(mod: any) {
-  const { tapestry } = mod;
-  
-  const overlayDefinition = {
-    id: mod.overlayId,
-    anchor: "TOP_CENTER" as const,
-    zIndex: 100,
-    visible: false,
-    render: function() {
-      if (mod.currentTarget) {
-        return {
-          type: "text",
-          text: `Looking at: ${mod.currentTarget.blockName}`,
-          color: 0xFFFFFF,
-          x: 10,
-          y: 10
-        };
-      }
-      return null;
-    }
-  };
-  
-  tapestry.client.overlay.register(overlayDefinition);
-  console.log("TWILA overlay registered");
-}
+// ======================================================
+// 3. RUNTIME ADAPTERS (API WRAPPERS)
+// ======================================================
 
-/**
- * Starts the raycasting loop using game ticks
- */
-function startRaycasting(mod: any) {
-  const { tapestry } = mod;
+// Player API Adapter
+function getPlayerPosition(): {x: number, y: number, z: number} | null {
+  if (twilaState === TwilaState.DISABLED) return null;
   
-  const raycastLoop = function(context: any) {
-    try {
-      // Get player position and look direction per spec
-      const player = tapestry.client.players.getLocal();
-      if (player && player.position && player.look) {
-        const position = player.position;
-        const look = player.look;
-        
-        // Raycast with options per spec
-        const result = tapestry.client.players.raycastBlock({
-          maxDistance: 32.0,
-          includeFluids: false,
-          includeEntities: false
-        });
-        
-        if (result && result.hit) {
-          // Extract block name using contract order per spec
-          let blockName = "Unknown Block";
-          
-          if (result.blockName && typeof result.blockName === 'string') {
-            blockName = result.blockName;
-          } else if (result.blockId && typeof result.blockId === 'string') {
-            blockName = result.blockId;
-          }
-          
-          mod.currentTarget = { blockName };
-          updateOverlayVisibility(mod);
-          console.log(`TWILA: Looking at: ${blockName}`);
-        } else {
-          mod.currentTarget = null;
-          updateOverlayVisibility(mod);
-          console.log("TWILA: No block in sight");
-        }
-      } else {
-        console.log("TWILA: ERROR - Could not get player position/look");
-      }
-      
-    } catch (error) {
-      console.log(`TWILA: Raycast error: ${error.toString()}`);
-    }
-    
-    // Schedule next tick using scheduler per spec
-    if (typeof tapestry.scheduler !== 'undefined' && tapestry.scheduler.nextTick) {
-      tapestry.scheduler.nextTick(raycastLoop);
-    } else {
-      // Fallback to simple timeout
-      console.log("TWILA: Scheduler not available - raycasting will stop");
-    }
-  };
-  
-  // Start loop
-  mod.tickHandle = tapestry.scheduler.nextTick(raycastLoop);
-  console.log("TWILA raycasting started");
-}
-
-/**
- * Updates overlay visibility based on current target
- */
-function updateOverlayVisibility(mod: any) {
-  const { tapestry } = mod;
-  const hasTarget = mod.currentTarget !== null;
-  
-  if (hasTarget && !mod.isVisible) {
-    // Show overlay
-    tapestry.client.overlay.setVisible("twila", mod.overlayId, true);
-    mod.isVisible = true;
-    console.log("TWILA overlay shown:", mod.currentTarget?.blockName);
-  } else if (!hasTarget && mod.isVisible) {
-    // Hide overlay
-    tapestry.client.overlay.setVisible("twila", mod.overlayId, false);
-    mod.isVisible = false;
-    console.log("TWILA overlay hidden");
+  try {
+    return tapestry.client.players.getPosition();
+  } catch (e) {
+    fatal("Failed to get player position", e);
+    return null;
   }
 }
+
+function getPlayerLook(): {pitch: number, yaw: number} | null {
+  if (twilaState === TwilaState.DISABLED) return null;
+  
+  try {
+    return tapestry.client.players.getLook();
+  } catch (e) {
+    fatal("Failed to get player look direction", e);
+    return null;
+  }
+}
+
+// Raycasting Adapter  
+function performRaycast(options: {maxDistance: number, includeFluids: boolean}) {
+  if (twilaState === TwilaState.DISABLED) return null;
+  
+  try {
+    return tapestry.client.players.raycastBlock(options);
+  } catch (e) {
+    fatal("Raycasting failed", e);
+    return null;
+  }
+}
+
+// Overlay Adapter
+function registerOverlay(definition: any) {
+  if (twilaState === TwilaState.DISABLED) return;
+  
+  try {
+    tapestry.client.overlay.register(definition);
+  } catch (e) {
+    fatal("Overlay registration failed", e);
+  }
+}
+
+function setOverlayVisibility(modId: string, overlayId: string, visible: boolean) {
+  if (twilaState === TwilaState.DISABLED) return;
+  
+  try {
+    tapestry.client.overlay.setVisible(modId, overlayId, visible);
+  } catch (e) {
+    fatal("Failed to set overlay visibility", e);
+  }
+}
+
+// Scheduler Adapter
+function scheduleNextTick(fn: () => void) {
+  if (twilaState === TwilaState.DISABLED) return;
+  
+  try {
+    tapestry.scheduler.nextTick(fn);
+  } catch (e) {
+    fatal("Scheduler failed", e);
+  }
+}
+
+// ======================================================
+// 4. SYSTEMS (raycast, overlay)
+// ======================================================
+
+let schedulerTaskActive = false;
+
+function stopScheduler() {
+  schedulerTaskActive = false;
+  console.log("[TWILA] Scheduler stopped");
+}
+
+function hideOverlay() {
+  if ((globalThis as any).twilaMod) {
+    setOverlayVisibility("twila", "twila-overlay", false);
+  }
+}
+
+function initializeTwilaSystems() {
+  console.log("[TWILA] Initializing systems...");
+  
+  try {
+    // Initialize overlay first
+    if (!DEBUG_DISABLE_OVERLAY) {
+      initializeOverlaySystem();
+    }
+    
+    // Then raycasting
+    if (!DEBUG_DISABLE_RAYCAST) {
+      initializeRaycastSystem();
+    }
+    
+    twilaState = TwilaState.RUNNING;
+    console.log("[TWILA] All systems initialized successfully");
+    
+  } catch (e) {
+    fatal("System initialization failed", e);
+  }
+}
+
+function initializeOverlaySystem() {
+  console.log("[TWILA] Initializing overlay system");
+  const definition = createOverlayDefinition();
+  registerOverlay(definition);
+}
+
+function initializeRaycastSystem() {
+  console.log("[TWILA] Starting raycasting system");
+  schedulerTaskActive = true;
+  scheduleNextTick(raycastLoop);
+}
+
+function createOverlayDefinition() {
+  return {
+    id: "twila-overlay",
+    anchor: "TOP_CENTER",
+    zIndex: 10,
+    visible: true,
+    render: function(ctx: any) {
+      if (twilaState === TwilaState.DISABLED) return;
+      
+      try {
+        const targetData = getCurrentTargetData();
+        if (targetData) {
+          ctx.text(targetData.blockName, 0, 0);
+        }
+      } catch (e) {
+        console.error("[TWILA] Overlay render failed", e);
+      }
+    }
+  };
+}
+
+// ======================================================
+// 5. DOMAIN LOGIC
+// ======================================================
+
+function processRaycastResult(result: any) {
+  if (!result.hit) {
+    currentTarget = null;
+    return;
+  }
+  
+  currentTarget = {
+    blockName: result.blockName,
+    blockId: result.blockId,
+    position: result.blockPos
+  };
+  
+  console.log("[TWILA] Target:", result.blockName);
+}
+
+function getCurrentTargetData(): TargetData | null {
+  return currentTarget;
+}
+
+function raycastLoop() {
+  if (twilaState === TwilaState.DISABLED || !schedulerTaskActive) return;
+  
+  try {
+    const result = performRaycast({
+      maxDistance: 32.0,
+      includeFluids: false
+    });
+    
+    if (result) {
+      processRaycastResult(result);
+    }
+    
+    // Schedule next tick
+    scheduleNextTick(raycastLoop);
+    
+  } catch (e) {
+    fatal("Raycast loop failed", e);
+  }
+}
+
+// ======================================================
+// 6. BOOTSTRAP
+// ======================================================
 
 // Register mod with Tapestry
 tapestry.mod.define(twilaMod);
-
