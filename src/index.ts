@@ -45,22 +45,73 @@ function runStartupDiagnostics() {
 }
 
 function hookLifecycleEvents() {
-  // Log phase transitions if available
-  if (tapestry.phase && tapestry.phase.onAny) {
-    tapestry.phase.onAny((phase: string) => {
-      console.log("[TWILA] Phase:", phase);
-    });
-  }
+  // Neither scheduler nor events available during TS_ACTIVATE
+  // Expose global function for Tapestry to call when APIs are ready
+  console.log("[TWILA] Exposing global registration function for Tapestry");
   
-  // Hook into runtime start event
-  if (tapestry.events && tapestry.events.on) {
-    tapestry.events.on("platform", "engine:runtimeStart", () => {
-      console.log("[TWILA] Runtime started - initializing systems");
-      initializeTwilaSystems();
+  // Expose function globally for Tapestry to call when APIs are available
+  (globalThis as any).twilaRegisterEvents = function() {
+    console.log("[TWILA] Global registration function called - APIs should be available");
+    
+    // Check both possible event API locations
+    console.log("[TWILA] Available APIs:", {
+      "tapestry.events": !!tapestry.events,
+      "tapestry.mod.on": !!tapestry.mod?.on,
+      "tapestry.events.on": !!(tapestry.events && tapestry.events.on),
+      "tapestry.mod.events.on": !!(tapestry.mod?.events && tapestry.mod.events.on)
     });
-  } else {
-    console.log("[TWILA] Events not yet available - will retry");
-  }
+    
+    // Try different API paths for event registration
+    let eventRegistered = false;
+    
+    // Try tapestry.mod.on first (likely correct)
+    if (tapestry.mod && tapestry.mod.on) {
+      try {
+        console.log("[TWILA] Attempting registration via tapestry.mod.on");
+        console.log("[TWILA] tapestry.mod.on type:", typeof tapestry.mod.on);
+        console.log("[TWILA] tapestry.mod.on function signature test:");
+        
+        // Test function with different approaches
+        try {
+          // Test 1: Try simple event registration
+          console.log("[TWILA] Test 1: Simple registration");
+          tapestry.mod.on("engine:runtimeStart", () => {
+            console.log("[TWILA] Runtime started - initializing systems");
+            initializeTwilaSystems();
+          });
+          console.log("[TWILA] Test 1: Simple registration succeeded");
+          eventRegistered = true;
+        } catch (e1) {
+          console.log("[TWILA] Test 1 failed:", e1.message);
+          console.log("[TWILA] Test 1 error stack:", e1.stack);
+        }
+        
+      } catch (e) {
+        console.log("[TWILA] tapestry.mod.on failed:", e.message);
+        console.log("[TWILA] tapestry.mod.on error stack:", e.stack);
+      }
+    }
+    
+    // Fallback: try tapestry.events.on
+    if (!eventRegistered && tapestry.events && tapestry.events.on) {
+      try {
+        tapestry.events.on("platform", "engine:runtimeStart", () => {
+          console.log("[TWILA] Runtime started - initializing systems");
+          initializeTwilaSystems();
+        });
+        console.log("[TWILA] Successfully registered for engine:runtimeStart event via tapestry.events.on");
+        eventRegistered = true;
+      } catch (e) {
+        console.log("[TWILA] tapestry.events.on failed:", e.message);
+      }
+    }
+    
+    if (!eventRegistered) {
+      console.error("[TWILA] Failed to register for engine:runtimeStart event - no working event API found");
+    }
+  };
+  
+  console.log("[TWILA] Global function twilaRegisterEvents exposed");
 }
 
 function fatal(reason: string, err?: any) {
