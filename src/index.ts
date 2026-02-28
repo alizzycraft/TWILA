@@ -30,6 +30,8 @@ interface TargetData {
 }
 
 let currentTarget: TargetData | null = null;
+let schedulerTaskActive = false;
+let twilaModId: string | null = null; // Store mod ID for later use
 
 // ======================================================
 // 2. LIFECYCLE HOOKS
@@ -41,74 +43,48 @@ function runStartupDiagnostics() {
   console.log("players API:", !!tapestry.client?.players);
   console.log("overlay API:", !!tapestry.client?.overlay);
   console.log("events API:", !!tapestry.events);
+  console.log("mod API:", !!tapestry.mod);
+  console.log("client API:", !!tapestry.client);
   console.log("=========================");
+  
+  // Test individual API methods
+  try {
+    if (tapestry.client?.players) {
+      console.log("[TWILA] Players API methods available:", {
+        "getLocal": typeof tapestry.client.players.getLocal,
+        "getPosition": typeof tapestry.client.players.getPosition,
+        "getLook": typeof tapestry.client.players.getLook,
+        "raycastBlock": typeof tapestry.client.players.raycastBlock
+      });
+    }
+  } catch (e) {
+    console.error("[TWILA] Error testing players API:", e);
+  }
+  
+  try {
+    if (tapestry.client?.overlay) {
+      console.log("[TWILA] Overlay API methods available:", {
+        "register": typeof tapestry.client.overlay.register,
+        "setVisible": typeof tapestry.client.overlay.setVisible
+      });
+    }
+  } catch (e) {
+    console.error("[TWILA] Error testing overlay API:", e);
+  }
 }
 
 function hookLifecycleEvents() {
-  // Neither scheduler nor events available during TS_ACTIVATE
-  // Expose global function for Tapestry to call when APIs are ready
+  // APIs are not available during TS_ACTIVATE phase
+  // The global registration function will be called by Tapestry when client APIs are ready
   console.log("[TWILA] Exposing global registration function for Tapestry");
   
   // Expose function globally for Tapestry to call when APIs are available
   (globalThis as any).twilaRegisterEvents = function() {
     console.log("[TWILA] Global registration function called - APIs should be available");
     
-    // Check both possible event API locations
-    console.log("[TWILA] Available APIs:", {
-      "tapestry.events": !!tapestry.events,
-      "tapestry.mod.on": !!tapestry.mod?.on,
-      "tapestry.events.on": !!(tapestry.events && tapestry.events.on),
-      "tapestry.mod.events.on": !!(tapestry.mod?.events && tapestry.mod.events.on)
-    });
-    
-    // Try different API paths for event registration
-    let eventRegistered = false;
-    
-    // Try tapestry.mod.on first (likely correct)
-    if (tapestry.mod && tapestry.mod.on) {
-      try {
-        console.log("[TWILA] Attempting registration via tapestry.mod.on");
-        console.log("[TWILA] tapestry.mod.on type:", typeof tapestry.mod.on);
-        console.log("[TWILA] tapestry.mod.on function signature test:");
-        
-        // Test function with different approaches
-        try {
-          // Test 1: Try simple event registration
-          console.log("[TWILA] Test 1: Simple registration");
-          tapestry.mod.on("engine:runtimeStart", () => {
-            console.log("[TWILA] Runtime started - initializing systems");
-            initializeTwilaSystems();
-          });
-          console.log("[TWILA] Test 1: Simple registration succeeded");
-          eventRegistered = true;
-        } catch (e1) {
-          console.log("[TWILA] Test 1 failed:", e1.message);
-          console.log("[TWILA] Test 1 error stack:", e1.stack);
-        }
-        
-      } catch (e) {
-        console.log("[TWILA] tapestry.mod.on failed:", e.message);
-        console.log("[TWILA] tapestry.mod.on error stack:", e.stack);
-      }
-    }
-    
-    // Fallback: try tapestry.events.on
-    if (!eventRegistered && tapestry.events && tapestry.events.on) {
-      try {
-        tapestry.events.on("platform", "engine:runtimeStart", () => {
-          console.log("[TWILA] Runtime started - initializing systems");
-          initializeTwilaSystems();
-        });
-        console.log("[TWILA] Successfully registered for engine:runtimeStart event via tapestry.events.on");
-        eventRegistered = true;
-      } catch (e) {
-        console.log("[TWILA] tapestry.events.on failed:", e.message);
-      }
-    }
-    
-    if (!eventRegistered) {
-      console.error("[TWILA] Failed to register for engine:runtimeStart event - no working event API found");
-    }
+    // Initialize systems immediately - APIs are now ready
+    console.log("[TWILA] Initializing systems directly (APIs available)");
+    initializeTwilaSystems();
   };
   
   console.log("[TWILA] Global function twilaRegisterEvents exposed");
@@ -128,6 +104,9 @@ const twilaMod = {
     console.log("[TWILA] Starting activation...");
     
     try {
+      // Store mod ID for later use
+      twilaModId = "twila";
+      
       // Store tapestry reference
       (globalThis as any).twilaMod = {
         tapestry,
@@ -189,8 +168,12 @@ function performRaycast(options: {maxDistance: number, includeFluids: boolean}) 
   if (twilaState === TwilaState.DISABLED) return null;
   
   try {
-    return tapestry.client.players.raycastBlock(options);
+    console.log("[TWILA] Attempting raycast with options:", options);
+    const result = tapestry.client.players.raycastBlock(options);
+    console.log("[TWILA] Raycast result:", result);
+    return result;
   } catch (e) {
+    console.error("[TWILA] Raycasting failed:", e);
     fatal("Raycasting failed", e);
     return null;
   }
@@ -201,8 +184,30 @@ function registerOverlay(definition: any) {
   if (twilaState === TwilaState.DISABLED) return;
   
   try {
+    console.log("[TWILA] Registering overlay with definition:", definition);
+    console.log("[TWILA] tapestry.client.overlay exists:", !!tapestry.client?.overlay);
+    console.log("[TWILA] tapestry.client.overlay.register type:", typeof tapestry.client?.overlay?.register);
+    
+    if (!tapestry.client?.overlay) {
+      throw new Error("tapestry.client.overlay is undefined");
+    }
+    
+    if (!tapestry.client.overlay.register) {
+      throw new Error("tapestry.client.overlay.register is not a function");
+    }
+    
+    // Store current context and set mod context for registration
+    console.log("[TWILA] Setting execution context for overlay registration");
+    
     tapestry.client.overlay.register(definition);
+    console.log("[TWILA] Overlay registration successful");
   } catch (e) {
+    console.error("[TWILA] Overlay registration failed:", e);
+    console.error("[TWILA] Error details:", {
+      message: e.message,
+      stack: e.stack,
+      name: e.name
+    });
     fatal("Overlay registration failed", e);
   }
 }
@@ -211,8 +216,11 @@ function setOverlayVisibility(modId: string, overlayId: string, visible: boolean
   if (twilaState === TwilaState.DISABLED) return;
   
   try {
+    console.log(`[TWILA] Setting overlay visibility: mod=${modId}, overlay=${overlayId}, visible=${visible}`);
     tapestry.client.overlay.setVisible(modId, overlayId, visible);
+    console.log("[TWILA] Overlay visibility set successfully");
   } catch (e) {
+    console.error("[TWILA] Failed to set overlay visibility:", e);
     fatal("Failed to set overlay visibility", e);
   }
 }
@@ -232,8 +240,6 @@ function scheduleNextTick(fn: () => void) {
 // 4. SYSTEMS (raycast, overlay)
 // ======================================================
 
-let schedulerTaskActive = false;
-
 function stopScheduler() {
   schedulerTaskActive = false;
   console.log("[TWILA] Scheduler stopped");
@@ -249,6 +255,31 @@ function initializeTwilaSystems() {
   console.log("[TWILA] Initializing systems...");
   
   try {
+    // Test API availability first
+    console.log("[TWILA] === API AVAILABILITY CHECK ===");
+    console.log("[TWILA] tapestry.client exists:", !!tapestry.client);
+    console.log("[TWILA] tapestry.client.players exists:", !!tapestry.client?.players);
+    console.log("[TWILA] tapestry.client.overlay exists:", !!tapestry.client?.overlay);
+    console.log("[TWILA] tapestry.scheduler exists:", !!tapestry.scheduler);
+    
+    if (tapestry.client?.players) {
+      console.log("[TWILA] Players API methods:", {
+        "getLocal": typeof tapestry.client.players.getLocal,
+        "getPosition": typeof tapestry.client.players.getPosition,
+        "getLook": typeof tapestry.client.players.getLook,
+        "raycastBlock": typeof tapestry.client.players.raycastBlock
+      });
+    }
+    
+    if (tapestry.client?.overlay) {
+      console.log("[TWILA] Overlay API methods:", {
+        "register": typeof tapestry.client.overlay.register,
+        "setVisible": typeof tapestry.client.overlay.setVisible
+      });
+    }
+    
+    console.log("[TWILA] === END API CHECK ===");
+    
     // Initialize overlay first
     if (!DEBUG_DISABLE_OVERLAY) {
       initializeOverlaySystem();
@@ -280,21 +311,33 @@ function initializeRaycastSystem() {
 }
 
 function createOverlayDefinition() {
+  console.log("[TWILA] Creating overlay definition");
   return {
     id: "twila-overlay",
     anchor: "TOP_CENTER",
     zIndex: 10,
     visible: true,
     render: function(ctx: any) {
-      if (twilaState === TwilaState.DISABLED) return;
+      console.log("[TWILA] Overlay render function called, state:", twilaState);
+      
+      if (twilaState === TwilaState.DISABLED) {
+        console.log("[TWILA] Overlay render skipped - mod disabled");
+        return;
+      }
       
       try {
         const targetData = getCurrentTargetData();
+        console.log("[TWILA] Current target data:", targetData);
+        
         if (targetData) {
+          console.log(`[TWILA] Rendering overlay with text: ${targetData.blockName}`);
           ctx.text(targetData.blockName, 0, 0);
+          console.log("[TWILA] Overlay text rendered successfully");
+        } else {
+          console.log("[TWILA] No target data to render");
         }
       } catch (e) {
-        console.error("[TWILA] Overlay render failed", e);
+        console.error("[TWILA] Overlay render failed:", e);
       }
     }
   };
@@ -305,18 +348,21 @@ function createOverlayDefinition() {
 // ======================================================
 
 function processRaycastResult(result: any) {
+  console.log("[TWILA] Processing raycast result:", result);
+  
   if (!result.hit) {
+    console.log("[TWILA] Raycast missed - clearing target");
     currentTarget = null;
     return;
   }
   
   currentTarget = {
-    blockName: result.blockName,
-    blockId: result.blockId,
-    position: result.blockPos
+    blockName: result.blockName || "Unknown Block",
+    blockId: result.blockId || "unknown",
+    position: result.blockPos || {x: 0, y: 0, z: 0}
   };
   
-  console.log("[TWILA] Target:", result.blockName);
+  console.log("[TWILA] Target updated:", currentTarget);
 }
 
 function getCurrentTargetData(): TargetData | null {
@@ -324,7 +370,10 @@ function getCurrentTargetData(): TargetData | null {
 }
 
 function raycastLoop() {
-  if (twilaState === TwilaState.DISABLED || !schedulerTaskActive) return;
+  if (twilaState === TwilaState.DISABLED || !schedulerTaskActive) {
+    console.log("[TWILA] Raycast loop stopped - state:", twilaState, "schedulerActive:", schedulerTaskActive);
+    return;
+  }
   
   try {
     const result = performRaycast({
@@ -334,12 +383,15 @@ function raycastLoop() {
     
     if (result) {
       processRaycastResult(result);
+    } else {
+      console.log("[TWILA] Raycast returned null result");
     }
     
     // Schedule next tick
     scheduleNextTick(raycastLoop);
     
   } catch (e) {
+    console.error("[TWILA] Raycast loop failed:", e);
     fatal("Raycast loop failed", e);
   }
 }
