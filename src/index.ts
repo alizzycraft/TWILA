@@ -39,23 +39,23 @@ let twilaModId: string | null = null; // Store mod ID for later use
 
 function runStartupDiagnostics() {
   console.log("=== TWILA ENVIRONMENT ===");
-  console.log("scheduler:", !!tapestry.scheduler);
-  console.log("players API:", !!tapestry.client?.players);
-  console.log("overlay API:", !!tapestry.client?.overlay);
-  console.log("events API:", !!tapestry.events);
-  console.log("mod API:", !!tapestry.mod);
-  console.log("client API:", !!tapestry.client);
+  console.log(`scheduler: ${!!tapestry.scheduler}`);
+  console.log(`players API: ${!!tapestry.client?.players}`);
+  console.log(`overlay API: ${!!tapestry.client?.overlay}`);
+  console.log(`events API: ${!!tapestry.events}`);
+  console.log(`mod API: ${!!tapestry.mod}`);
+  console.log(`client API: ${!!tapestry.client}`);
   console.log("=========================");
   
   // Test individual API methods
   try {
     if (tapestry.client?.players) {
-      console.log("[TWILA] Players API methods available:", {
+      console.log(`[TWILA] Players API methods available: ${JSON.stringify({
         "getLocal": typeof tapestry.client.players.getLocal,
         "getPosition": typeof tapestry.client.players.getPosition,
         "getLook": typeof tapestry.client.players.getLook,
         "raycastBlock": typeof tapestry.client.players.raycastBlock
-      });
+      })}`);
     }
   } catch (e) {
     console.error("[TWILA] Error testing players API:", e);
@@ -63,10 +63,10 @@ function runStartupDiagnostics() {
   
   try {
     if (tapestry.client?.overlay) {
-      console.log("[TWILA] Overlay API methods available:", {
+      console.log(`[TWILA] Overlay API methods available: ${JSON.stringify({
         "register": typeof tapestry.client.overlay.register,
         "setVisible": typeof tapestry.client.overlay.setVisible
-      });
+      })}`);
     }
   } catch (e) {
     console.error("[TWILA] Error testing overlay API:", e);
@@ -168,9 +168,9 @@ function performRaycast(options: {maxDistance: number, includeFluids: boolean}) 
   if (twilaState === TwilaState.DISABLED) return null;
   
   try {
-    console.log("[TWILA] Attempting raycast with options:", options);
+    console.log(`[TWILA] Attempting raycast with options: ${JSON.stringify(options)}`);
     const result = tapestry.client.players.raycastBlock(options);
-    console.log("[TWILA] Raycast result:", result);
+    console.log(`[TWILA] Raycast result: ${JSON.stringify(result)}`);
     return result;
   } catch (e) {
     console.error("[TWILA] Raycasting failed:", e);
@@ -184,9 +184,9 @@ function registerOverlay(definition: any) {
   if (twilaState === TwilaState.DISABLED) return;
   
   try {
-    console.log("[TWILA] Registering overlay with definition:", definition);
-    console.log("[TWILA] tapestry.client.overlay exists:", !!tapestry.client?.overlay);
-    console.log("[TWILA] tapestry.client.overlay.register type:", typeof tapestry.client?.overlay?.register);
+    console.log(`[TWILA] Registering overlay with definition: ${JSON.stringify(definition)}`);
+    console.log(`[TWILA] tapestry.client.overlay exists: ${!!tapestry.client?.overlay}`);
+    console.log(`[TWILA] tapestry.client.overlay.register type: ${typeof tapestry.client?.overlay?.register}`);
     
     if (!tapestry.client?.overlay) {
       throw new Error("tapestry.client.overlay is undefined");
@@ -230,8 +230,11 @@ function scheduleNextTick(fn: () => void) {
   if (twilaState === TwilaState.DISABLED) return;
   
   try {
+    console.log("[TWILA] About to call tapestry.scheduler.nextTick");
     tapestry.scheduler.nextTick(fn);
+    console.log("[TWILA] Successfully called tapestry.scheduler.nextTick");
   } catch (e) {
+    console.error("[TWILA] Scheduler failed:", e);
     fatal("Scheduler failed", e);
   }
 }
@@ -257,25 +260,25 @@ function initializeTwilaSystems() {
   try {
     // Test API availability first
     console.log("[TWILA] === API AVAILABILITY CHECK ===");
-    console.log("[TWILA] tapestry.client exists:", !!tapestry.client);
-    console.log("[TWILA] tapestry.client.players exists:", !!tapestry.client?.players);
-    console.log("[TWILA] tapestry.client.overlay exists:", !!tapestry.client?.overlay);
-    console.log("[TWILA] tapestry.scheduler exists:", !!tapestry.scheduler);
+    console.log(`[TWILA] tapestry.client exists: ${!!tapestry.client}`);
+    console.log(`[TWILA] tapestry.client.players exists: ${!!tapestry.client?.players}`);
+    console.log(`[TWILA] tapestry.client.overlay exists: ${!!tapestry.client?.overlay}`);
+    console.log(`[TWILA] tapestry.scheduler exists: ${!!tapestry.scheduler}`);
     
     if (tapestry.client?.players) {
-      console.log("[TWILA] Players API methods:", {
+      console.log(`[TWILA] Players API methods: ${JSON.stringify({
         "getLocal": typeof tapestry.client.players.getLocal,
         "getPosition": typeof tapestry.client.players.getPosition,
         "getLook": typeof tapestry.client.players.getLook,
         "raycastBlock": typeof tapestry.client.players.raycastBlock
-      });
+      })}`);
     }
     
     if (tapestry.client?.overlay) {
-      console.log("[TWILA] Overlay API methods:", {
+      console.log(`[TWILA] Overlay API methods: ${JSON.stringify({
         "register": typeof tapestry.client.overlay.register,
         "setVisible": typeof tapestry.client.overlay.setVisible
-      });
+      })}`);
     }
     
     console.log("[TWILA] === END API CHECK ===");
@@ -307,7 +310,17 @@ function initializeOverlaySystem() {
 function initializeRaycastSystem() {
   console.log("[TWILA] Starting raycasting system");
   schedulerTaskActive = true;
+  console.log(`[TWILA] schedulerTaskActive set to: ${schedulerTaskActive}`);
+  console.log("[TWILA] About to schedule first raycast loop");
   scheduleNextTick(raycastLoop);
+  console.log("[TWILA] First raycast loop scheduled");
+  
+  // Test scheduler with a simple function
+  console.log("[TWILA] Testing scheduler with simple test function");
+  scheduleNextTick(() => {
+    console.log("[TWILA] === SCHEDULER TEST FUNCTION CALLED ===");
+  });
+  console.log("[TWILA] Scheduler test function scheduled");
 }
 
 function createOverlayDefinition() {
@@ -318,7 +331,8 @@ function createOverlayDefinition() {
     zIndex: 10,
     visible: true,
     render: function(ctx: any) {
-      console.log("[TWILA] Overlay render function called, state:", twilaState);
+      console.log("[TWILA] === OVERLAY RENDER FUNCTION CALLED ===");
+      console.log(`[TWILA] Overlay render function called, state: ${twilaState}`);
       
       if (twilaState === TwilaState.DISABLED) {
         console.log("[TWILA] Overlay render skipped - mod disabled");
@@ -327,7 +341,7 @@ function createOverlayDefinition() {
       
       try {
         const targetData = getCurrentTargetData();
-        console.log("[TWILA] Current target data:", targetData);
+        console.log(`[TWILA] Current target data: ${JSON.stringify(targetData)}`);
         
         if (targetData) {
           console.log(`[TWILA] Rendering overlay with text: ${targetData.blockName}`);
@@ -348,7 +362,7 @@ function createOverlayDefinition() {
 // ======================================================
 
 function processRaycastResult(result: any) {
-  console.log("[TWILA] Processing raycast result:", result);
+    console.log(`[TWILA] Processing raycast result: ${JSON.stringify(result)}`);
   
   if (!result.hit) {
     console.log("[TWILA] Raycast missed - clearing target");
@@ -362,7 +376,7 @@ function processRaycastResult(result: any) {
     position: result.blockPos || {x: 0, y: 0, z: 0}
   };
   
-  console.log("[TWILA] Target updated:", currentTarget);
+  console.log(`[TWILA] Target updated: ${JSON.stringify(currentTarget)}`);
 }
 
 function getCurrentTargetData(): TargetData | null {
@@ -370,12 +384,16 @@ function getCurrentTargetData(): TargetData | null {
 }
 
 function raycastLoop() {
+  console.log("[TWILA] === RAYCAST LOOP ENTRY ===");
+  console.log(`[TWILA] schedulerTaskActive: ${schedulerTaskActive}, twilaState: ${twilaState}`);
+  
   if (twilaState === TwilaState.DISABLED || !schedulerTaskActive) {
-    console.log("[TWILA] Raycast loop stopped - state:", twilaState, "schedulerActive:", schedulerTaskActive);
+    console.log(`[TWILA] Raycast loop stopped - state: ${twilaState}, schedulerActive: ${schedulerTaskActive}`);
     return;
   }
   
   try {
+    console.log("[TWILA] About to perform raycast");
     const result = performRaycast({
       maxDistance: 32.0,
       includeFluids: false
@@ -388,6 +406,7 @@ function raycastLoop() {
     }
     
     // Schedule next tick
+    console.log("[TWILA] Scheduling next raycast tick");
     scheduleNextTick(raycastLoop);
     
   } catch (e) {
