@@ -336,7 +336,7 @@ function createOverlayDefinition() {
       
       if (twilaState === TwilaState.DISABLED) {
         console.log("[TWILA] Overlay render skipped - mod disabled");
-        return;
+        return null;
       }
       
       try {
@@ -345,13 +345,22 @@ function createOverlayDefinition() {
         
         if (targetData) {
           console.log(`[TWILA] Rendering overlay with text: ${targetData.blockName}`);
-          ctx.text(targetData.blockName, 0, 0);
-          console.log("[TWILA] Overlay text rendered successfully");
+          // Coordinates are relative to anchor in OverlayRenderer.
+          // With CENTER anchor this renders near the crosshair.
+          return {
+            type: "text",
+            content: targetData.blockName,
+            x: 0,
+            y: 12,
+            color: "#FFFFFF"
+          };
         } else {
           console.log("[TWILA] No target data to render");
+          return null;
         }
       } catch (e) {
         console.error("[TWILA] Overlay render failed:", e);
+        return null;
       }
     }
   };
