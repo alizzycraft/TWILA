@@ -351,7 +351,7 @@ function createOverlayDefinition() {
             type: "text",
             content: targetData.blockName,
             x: 0,
-            y: 12,
+            y: 8,
             color: "#FFFFFF"
           };
         } else {
