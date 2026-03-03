@@ -32,6 +32,8 @@ interface TargetData {
 let currentTarget: TargetData | null = null;
 let schedulerTaskActive = false;
 let twilaModId: string | null = null; // Store mod ID for later use
+let consecutiveMisses = 0;
+const MISS_CLEAR_THRESHOLD = 4;
 
 // ======================================================
 // 2. LIFECYCLE HOOKS
@@ -331,22 +333,14 @@ function createOverlayDefinition() {
     zIndex: 10,
     visible: true,
     render: function(ctx: any) {
-      console.log("[TWILA] === OVERLAY RENDER FUNCTION CALLED ===");
-      console.log(`[TWILA] Overlay render function called, state: ${twilaState}`);
-      
       if (twilaState === TwilaState.DISABLED) {
-        console.log("[TWILA] Overlay render skipped - mod disabled");
         return null;
       }
       
       try {
         const targetData = getCurrentTargetData();
-        console.log(`[TWILA] Current target data: ${JSON.stringify(targetData)}`);
         
         if (targetData) {
-          console.log(`[TWILA] Rendering overlay with text: ${targetData.blockName}`);
-          // Coordinates are relative to anchor in OverlayRenderer.
-          // With CENTER anchor this renders near the crosshair.
           return {
             type: "text",
             content: targetData.blockName,
@@ -355,7 +349,6 @@ function createOverlayDefinition() {
             color: "#FFFFFF"
           };
         } else {
-          console.log("[TWILA] No target data to render");
           return null;
         }
       } catch (e) {
@@ -374,10 +367,17 @@ function processRaycastResult(result: any) {
     console.log(`[TWILA] Processing raycast result: ${JSON.stringify(result)}`);
   
   if (!result.hit) {
-    console.log("[TWILA] Raycast missed - clearing target");
-    currentTarget = null;
+    consecutiveMisses += 1;
+    if (consecutiveMisses >= MISS_CLEAR_THRESHOLD) {
+      console.log(`[TWILA] Raycast missed ${consecutiveMisses}x - clearing target`);
+      currentTarget = null;
+    } else {
+      console.log(`[TWILA] Raycast miss ${consecutiveMisses}/${MISS_CLEAR_THRESHOLD} - keeping previous target`);
+    }
     return;
   }
+
+  consecutiveMisses = 0;
   
   currentTarget = {
     blockName: result.blockName || "Unknown Block",
