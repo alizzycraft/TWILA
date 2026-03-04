@@ -26,6 +26,7 @@ const DEBUG_DISABLE_OVERLAY = false;
 interface TargetData {
   blockName: string;
   blockId: string;
+  targetType?: "block" | "entity" | "fluid";
   position: {x: number, y: number, z: number};
 }
 
@@ -380,9 +381,10 @@ function processRaycastResult(result: any) {
   consecutiveMisses = 0;
   
   currentTarget = {
-    blockName: result.blockName || "Unknown Block",
-    blockId: result.blockId || "unknown",
-    position: result.blockPos || {x: 0, y: 0, z: 0}
+    blockName: result.entityName || result.blockName || "Unknown Target",
+    blockId: result.entityId || result.blockId || "unknown",
+    targetType: result.targetType || (result.entityId ? "entity" : "block"),
+    position: result.entityPos || result.blockPos || {x: 0, y: 0, z: 0}
   };
   
   console.log(`[TWILA] Target updated: ${JSON.stringify(currentTarget)}`);
@@ -405,7 +407,7 @@ function raycastLoop() {
     console.log("[TWILA] About to perform raycast");
     const result = performRaycast({
       maxDistance: 32.0,
-      includeFluids: false
+      includeFluids: true
     });
     
     if (result) {
