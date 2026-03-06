@@ -18,8 +18,8 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
           link.removeAttribute('aria-current')
         })
         
-        // Remove target="_blank" from Tapestry links
-        removeTapestryTargetBlank()
+        // Handle Tapestry links
+        handleTapestryLinks()
       }, 100)
     }
     
@@ -31,14 +31,14 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
           link.setAttribute('aria-current', 'page')
         })
         
-        // Remove target="_blank" from Tapestry links
-        removeTapestryTargetBlank()
+        // Handle Tapestry links
+        handleTapestryLinks()
       }, 100)
     }
     
     // Set up MutationObserver to catch dynamically added links
     const observer = new MutationObserver(() => {
-      removeTapestryTargetBlank()
+      handleTapestryLinks()
     })
     
     // Start observing when DOM is ready
@@ -57,20 +57,31 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
     }
     
     // Also run on mount with multiple delays to catch all scenarios
-    setTimeout(() => removeTapestryTargetBlank(), 100)
-    setTimeout(() => removeTapestryTargetBlank(), 500)
-    setTimeout(() => removeTapestryTargetBlank(), 1000)
-    setTimeout(() => removeTapestryTargetBlank(), 2000)
+    setTimeout(() => handleTapestryLinks(), 100)
+    setTimeout(() => handleTapestryLinks(), 500)
+    setTimeout(() => handleTapestryLinks(), 1000)
+    setTimeout(() => handleTapestryLinks(), 2000)
   }
 }
 
-function removeTapestryTargetBlank() {
+function handleTapestryLinks() {
   // Find all links to Tapestry docs
   const tapestryLinks = document.querySelectorAll('a[href*="alizzycraft.github.io/tapestry"]')
-  tapestryLinks.forEach(link => {
-    if (link.getAttribute('target') === '_blank') {
-      link.removeAttribute('target')
-      link.removeAttribute('rel')
+  tapestryLinks.forEach((link: Element) => {
+    const anchor = link as HTMLAnchorElement
+    
+    // Remove target and rel attributes
+    anchor.removeAttribute('target')
+    anchor.removeAttribute('rel')
+    
+    // Add click handler to force full page navigation
+    if (!anchor.dataset.tapestryHandled) {
+      anchor.dataset.tapestryHandled = 'true'
+      anchor.addEventListener('click', (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        window.location.href = anchor.href
+      })
     }
   })
 }
