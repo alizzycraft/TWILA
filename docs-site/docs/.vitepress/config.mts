@@ -4,7 +4,7 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: "TWILA",
   description: "That's What I'm Looking At - A client-side block and entity identification overlay mod for Tapestry",
-  base: '/twila/',
+  base: '/TWILA/',
 
   // Ignore dead links for now - will be fixed in link validation task
   ignoreDeadLinks: true,
@@ -26,10 +26,10 @@ export default defineConfig({
 
   // Favicon configuration
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/twila/favicon.svg' }],
-    ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/twila/favicon-32x32.png' }],
-    ['link', { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/twila/favicon-16x16.png' }],
-    ['link', { rel: 'shortcut icon', href: '/twila/favicon.ico' }]
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/TWILA/favicon.svg' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/TWILA/favicon-32x32.png' }],
+    ['link', { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/TWILA/favicon-16x16.png' }],
+    ['link', { rel: 'shortcut icon', href: '/TWILA/favicon.ico' }]
   ],
 
   themeConfig: {
