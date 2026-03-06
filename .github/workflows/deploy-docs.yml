@@ -27,17 +27,17 @@ jobs:
           node-version: '20'
           
       - name: Install dependencies
-        working-directory: twila/docs-site
+        working-directory: docs-site
         run: npm ci
         
       - name: Build documentation
-        working-directory: twila/docs-site
+        working-directory: docs-site
         run: npm run docs:build
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: twila/docs-site/docs/.vitepress/dist
+          path: docs-site/docs/.vitepress/dist
           
   deploy:
     needs: build
