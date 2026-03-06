@@ -18,7 +18,7 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
           link.removeAttribute('aria-current')
         })
         
-        // Remove target="_blank" from Tapestry links
+        // Remove target="_blank" from Tapestry links (let browser handle navigation normally)
         removeTapestryTargetBlank()
       }, 100)
     }
@@ -36,18 +36,40 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
       }, 100)
     }
     
-    // Also run on mount
-    setTimeout(() => {
+    // Set up MutationObserver to catch dynamically added links
+    const observer = new MutationObserver(() => {
       removeTapestryTargetBlank()
-    }, 500)
+    })
+    
+    // Start observing when DOM is ready
+    if (document.body) {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      })
+    } else {
+      window.addEventListener('DOMContentLoaded', () => {
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        })
+      })
+    }
+    
+    // Also run on mount with multiple delays
+    setTimeout(() => removeTapestryTargetBlank(), 100)
+    setTimeout(() => removeTapestryTargetBlank(), 500)
+    setTimeout(() => removeTapestryTargetBlank(), 1000)
   }
 }
 
 function removeTapestryTargetBlank() {
   // Find all links to Tapestry docs
   const tapestryLinks = document.querySelectorAll('a[href*="alizzycraft.github.io/tapestry"]')
-  tapestryLinks.forEach(link => {
-    link.removeAttribute('target')
-    link.removeAttribute('rel')
+  tapestryLinks.forEach((link: Element) => {
+    const anchor = link as HTMLAnchorElement
+    // Simply remove target and rel - let the browser handle it as a normal link
+    anchor.removeAttribute('target')
+    anchor.removeAttribute('rel')
   })
 }
