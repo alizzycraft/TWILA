@@ -1,0 +1,778 @@
+/* =================================
+   Tapestry Theme - Minecraft Inspired
+================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Righteous&display=swap');
+
+:root {
+  /* Dark base colors (Minecraft-inspired) */
+  --bg-primary: #262626;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #3a3a3a;
+
+  /* Neutral text */
+  --text-primary: #f5f5f5;
+  --text-secondary: #d0d0d0;
+  --text-muted: #888888;
+
+  --border: #404040;
+
+  /* Minecraft accent colors - vibrant and bold */
+  --accent-orange: #ff9800;
+  --accent-green: #4caf50;
+  --accent-cyan: #007989;
+  --accent-red: #f44336;
+  --accent-yellow: #ffc107;
+  --accent-purple: #9c27b0;
+  --accent-blue: #2196f3;
+
+  /* VitePress CSS variables */
+  --vp-c-brand-1: #ff9800;
+  --vp-c-brand-2: #4caf50;
+  --vp-c-brand-3: #007989;
+  --vp-c-accent-1: #ffc107;
+  --vp-c-accent-2: #9c27b0;
+  --vp-c-accent-3: #2196f3;
+
+  /* VitePress dark theme overrides */
+  --vp-c-bg: #2D2D2D;
+  --vp-c-bg-soft: #2d2d2d;
+  --vp-c-bg-mute: #3a3a3a;
+  --vp-c-bg-alt: #2d2d2d;
+
+  --vp-c-text-1: #f5f5f5;
+  --vp-c-text-2: #d0d0d0;
+  --vp-c-text-3: #888888;
+
+  --vp-c-divider: #404040;
+  --vp-c-border: #404040;
+
+  --vp-code-bg: #0d0d0d;
+  --vp-code-color: #f5f5f5;
+
+  --radius: 4px;
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+/* =================================
+   Base
+================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+
+  background: var(--bg-primary);
+  color: var(--text-primary);
+
+  font-size: 18px;
+  font-family: 'Inconsolata', monospace;
+  line-height: 1.6;
+}
+
+/* =================================
+   Typography
+================================= */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Righteous', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+h1 {
+  font-size: 2.5rem;
+  color: var(--accent-orange);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.8);
+}
+
+h2 {
+  font-size: 1.8rem;
+  color: var(--accent-cyan);
+  border-bottom: 3px solid var(--accent-orange);
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+}
+
+h3 {
+  font-size: 1.3rem;
+  color: var(--accent-green);
+}
+
+/* =================================
+   Layout
+================================= */
+
+
+.section {
+  padding: 60px 0;
+  border-bottom: 2px solid var(--border);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+/* =================================
+   Header
+================================= */
+
+.VPNav {
+  background: var(--bg-secondary) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.logo {
+  font-family: 'Righteous', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--accent-orange);
+  text-transform: uppercase;
+}
+
+.nav-links {
+  display: flex;
+  gap: 24px;
+}
+
+.nav-links a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 1.1rem;
+  font-family: 'Righteous', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  border-bottom: 2px solid transparent;
+}
+
+.nav-links a:hover {
+  color: var(--accent-cyan);
+  border-bottom-color: var(--accent-cyan);
+}
+
+/* =================================
+   Hero
+================================= */
+
+.hero {
+  padding: 60px 0;
+  display: flex;
+  align-items: center;
+  gap: 60px;
+  text-align: center;
+}
+
+.hero-content {
+  flex: 1;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero p {
+  max-width: 700px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  font-size: 2rem;
+  line-height: 1.7;
+}
+
+.hero-image {
+  flex: 0 0 auto;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid var(--accent-cyan);
+  background: rgba(0, 188, 212, 0.1);
+  box-shadow: 0 0 20px rgba(0, 188, 212, 0.3);
+}
+
+/* =================================
+   Buttons
+================================= */
+
+.button {
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-size: 1rem;
+  font-family: 'Righteous', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 2px solid var(--accent-orange);
+  background: transparent;
+  color: var(--accent-orange);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.button:hover {
+  background: var(--accent-orange);
+  color: var(--bg-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(255, 152, 0, 0.4);
+}
+
+.button.brand {
+  background: var(--accent-orange);
+  color: var(--bg-primary);
+  border-color: var(--accent-orange);
+}
+
+.button.brand:hover {
+  background: var(--accent-yellow);
+  border-color: var(--accent-yellow);
+}
+
+/* =================================
+   Feature Grid
+================================= */
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin: 40px 0;
+}
+
+.feature-card {
+  background: var(--bg-secondary);
+  border: 3px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-orange), var(--accent-cyan), var(--accent-green));
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 8px 20px rgba(0, 188, 212, 0.2);
+}
+
+.feature-card h3 {
+  margin-top: 8px;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--vp-c-bg-alt);
+}
+
+.feature-card p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* =================================
+   Accent System - Colored Borders
+================================= */
+
+.thread-divider {
+  height: 4px;
+  margin: 40px 0;
+  background: linear-gradient(90deg,
+      var(--accent-orange) 0%,
+      var(--accent-yellow) 20%,
+      var(--accent-green) 40%,
+      var(--accent-cyan) 60%,
+      var(--accent-blue) 80%,
+      var(--accent-purple) 100%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.accent-orange {
+  border-left: 4px solid var(--accent-orange);
+}
+
+.accent-green {
+  border-left: 4px solid var(--accent-green);
+}
+
+.accent-cyan {
+  border-left: 4px solid var(--accent-cyan);
+}
+
+.accent-red {
+  border-left: 4px solid var(--accent-red);
+}
+
+.accent-yellow {
+  border-left: 4px solid var(--accent-yellow);
+}
+
+.accent-purple {
+  border-left: 4px solid var(--accent-purple);
+}
+
+.accent-blue {
+  border-left: 4px solid var(--accent-blue);
+}
+
+/* =================================
+   Code Blocks
+================================= */
+
+pre {
+  background: var(--vp-code-bg);
+  border: 2px solid var(--accent-cyan);
+  border-radius: var(--radius);
+  padding: 16px;
+  overflow-x: auto;
+  font-size: 1rem;
+  line-height: 1.5;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+code {
+  font-family: 'Inconsolata', monospace;
+  color: var(--vp-code-color);
+}
+
+/* =================================
+   Tables
+================================= */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  border: 2px solid var(--accent-orange);
+}
+
+thead {
+  background: rgba(255, 152, 0, 0.15);
+  border-bottom: 3px solid var(--accent-orange);
+}
+
+th {
+  padding: 12px 16px;
+  text-align: left;
+  font-family: 'Righteous', sans-serif;
+  color: var(--accent-orange);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr:hover {
+  background: rgba(0, 188, 212, 0.1);
+}
+
+/* =================================
+   Blockquote
+================================= */
+
+blockquote {
+  border-left: 4px solid var(--accent-cyan);
+  padding-left: 20px;
+  margin: 24px 0;
+  color: var(--text-secondary);
+  font-style: italic;
+  background: rgba(0, 188, 212, 0.05);
+  padding: 16px 20px;
+}
+
+/* =================================
+   Footer
+================================= */
+
+footer {
+  border-top: 4px solid var(--accent-orange);
+  margin-top: 60px;
+  background: var(--bg-secondary);
+  padding: 40px 0;
+}
+
+.footer-inner {
+  padding: 20px 0;
+  font-size: 1rem;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+/* =================================
+   VitePress Hero Overrides
+================================= */
+
+.VPHero {
+  padding-top: 80px !important;
+  padding-bottom: 22px !important;
+}
+
+.VPHero .container {
+  display: grid !important;
+  grid-template-columns: 1fr auto !important;
+  grid-template-rows: auto auto auto auto !important;
+  column-gap: 40px !important;
+  row-gap: 8px !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  align-items: start !important;
+}
+
+.VPHero .main {
+  display: contents !important;
+}
+
+.VPHero .image {
+  grid-column: 2 !important;
+  grid-row: 1 / 5 !important;
+  display: flex !important;
+  align-items: start !important;
+  justify-content: center !important;
+}
+
+.VPHero .name,
+.VPHero .text {
+  display: none !important;
+}
+
+.VPHero .tagline {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  font-family: 'Inconsolata', monospace !important;
+  font-size: 1.2rem !important;
+  line-height: 1.4 !important;
+  max-width: 700px !important;
+  color: var(--text-secondary) !important;
+  margin-top: 20px !important;
+  margin-bottom: 5px !important;
+  display: none !important;
+}
+
+/* Custom hero title styling */
+.custom-hero-title {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 16px !important;
+  flex-wrap: wrap !important;
+  margin-bottom: 20px !important;
+}
+
+.custom-hero-title .name {
+  font-family: 'Righteous', sans-serif !important;
+  font-size: 3.5rem !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+  color: #f5f5f5 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 2px !important;
+  text-shadow: 2px 2px 0 var(--accent-orange) !important;
+  display: inline !important;
+}
+
+.custom-hero-title .name .clip {
+  background: none !important;
+  -webkit-text-fill-color: #f5f5f5 !important;
+}
+
+.custom-hero-title .text {
+  font-family: 'Inconsolata', monospace !important;
+  font-size: 1.3rem !important;
+  color: #f5f5f5 !important;
+  font-style: normal !important;
+  font-weight: 500 !important;
+  margin: 0 !important;
+  display: inline !important;
+  margin-left: 40px !important;
+}
+
+.VPHero .info .tagline {
+  display: block !important;
+  font-family: 'Inconsolata', monospace !important;
+  font-size: 1.2rem !important;
+  line-height: 1.4 !important;
+  max-width: 700px !important;
+  color: var(--text-secondary) !important;
+  margin-top: 0px !important;
+  margin-bottom: 20px !important;
+}
+
+.VPHero .image-container {
+  position: relative !important;
+  width: 400px !important;
+  height: auto !important;
+  max-height: none !important;
+  border: 3px solid var(--accent-orange) !important;
+  border-radius: 8px !important;
+  background: none !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5) !important;
+  overflow: hidden !important;
+  transform: none !important;
+  margin-top: 10px;
+}
+
+.VPHero .image-bg {
+  display: none !important;
+}
+
+.VPHero .image-container .image-src {
+  position: static !important;
+  transform: none !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: none !important;
+  display: block !important;
+  object-fit: contain !important;
+  border-radius: 0 !important;
+}
+
+.VPHero .actions {
+  grid-column: 1 !important;
+  grid-row: 3 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  justify-content: flex-start !important;
+  padding-top: 0 !important;
+  margin-top: -15px !important;
+  margin-left: 80px !important;
+  width: fit-content !important;
+  justify-self: flex-start !important;
+  align-self: flex-start !important;
+  z-index: 2 !important;
+}
+
+.VPHero .action {
+  padding: 12px 28px !important;
+  font-size: 1rem !important;
+  font-family: 'Righteous', sans-serif !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+  border-radius: var(--radius) !important;
+}
+
+/* =================================
+   Feature Cards - VitePress
+================================= */
+
+.VPFeatures {
+  padding-top: 0px !important;
+  padding-bottom: 40px !important;
+}
+
+.VPFeatures .items {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 24px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 24px !important;
+}
+
+.VPFeatures .item {
+  padding: 0 !important;
+  border: none !important;
+  border-radius: var(--radius) !important;
+  background: transparent !important;
+  transition: all 0.3s ease !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.VPFeature {
+  background: #2a2a2a !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+.VPFeature .box {
+  padding: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+.VPFeature .title {
+  background: var(--accent-orange) !important;
+  padding: 12px 16px !important;
+  margin: 0 !important;
+  font-family: 'Righteous', sans-serif !important;
+  font-size: 1rem !important;
+  color: #1A1A1A !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  border-bottom: 3px solid rgba(0, 0, 0, 0.2) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Individual card colors */
+.VPFeatures .item:nth-child(1) .VPFeature .title {
+  background: var(--accent-orange) !important;
+}
+
+.VPFeatures .item:nth-child(2) .VPFeature .title {
+  background: var(--accent-cyan) !important;
+  color: #f5f5f5 !important;
+}
+
+.VPFeatures .item:nth-child(3) .VPFeature .title {
+  background: var(--accent-green) !important;
+}
+
+.VPFeatures .item:nth-child(4) .VPFeature .title {
+  background: var(--accent-blue) !important;
+  color: #f5f5f5 !important;
+}
+
+.VPFeatures .item:nth-child(5) .VPFeature .title {
+  background: var(--accent-purple) !important;
+  color: #f5f5f5 !important;
+}
+
+.VPFeatures .item:nth-child(6) .VPFeature .title {
+  background: var(--accent-yellow) !important;
+}
+
+.VPFeature .details {
+  padding: 16px !important;
+  font-size: 0.8rem !important;
+  line-height: 1.5 !important;
+  color: var(--text-secondary) !important;
+  margin: 0 !important;
+  background: #2a2a2a !important;
+  flex-grow: 1 !important;
+}
+
+/* =================================
+   Content Sections
+================================= */
+
+.vp-doc {
+  padding: 40px 0;
+}
+
+.vp-doc h2 {
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+.vp-doc p {
+  line-height: 1.8;
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+}
+
+.vp-doc ul,
+.vp-doc ol {
+  margin: 20px 0;
+  padding-left: 24px;
+}
+
+.vp-doc li {
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+}
+
+.vp-doc a {
+  color: var(--accent-cyan);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-cyan);
+  transition: all 0.3s ease;
+}
+
+.vp-doc a:hover {
+  color: var(--accent-orange);
+  border-bottom-color: var(--accent-orange);
+}
+
+/* =================================
+   Responsive
+================================= */
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .hero {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+  }
+
+  .VPHero .name {
+    font-size: 2.5rem !important;
+  }
+
+  .VPHero .text {
+    font-size: 1.2rem !important;
+  }
+
+  .nav-links {
+    gap: 16px;
+  }
+
+  .nav-links a {
+    font-size: 1rem;
+  }
+}
+
+.VPSwitchAppearance {
+  display: none !important;
+}
+
+.VPNavBarAppearance {
+  display: none !important;
+}
