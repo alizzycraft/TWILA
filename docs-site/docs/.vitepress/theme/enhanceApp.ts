@@ -45,7 +45,7 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
 
 function removeTapestryTargetBlank() {
   // Find all links to Tapestry docs
-  const tapestryLinks = document.querySelectorAll('a[href*="alizzycraft.github.io/tapestry"]')
+  const tapestryLinks = document.querySelectorAll('a[href*="https://alizzycraft.github.io/tapestry/"]')
   tapestryLinks.forEach(link => {
     link.removeAttribute('target')
     link.removeAttribute('rel')
