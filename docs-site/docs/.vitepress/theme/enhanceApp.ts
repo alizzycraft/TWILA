@@ -3,9 +3,26 @@ import { EnhanceAppContext } from 'vitepress'
 export function enhanceApp({ app, router }: EnhanceAppContext) {
   // Add aria-current="page" to active navigation links
   if (typeof window !== 'undefined') {
+    // Detect if we're showing a 404 when we shouldn't be (bfcache issue)
+    // This happens when router state is stale after back navigation
+    const checkFor404Mismatch = () => {
+      const is404Page = document.querySelector('.NotFound') !== null
+      const currentPath = window.location.pathname
+      const expectedPath = '/TWILA/'
+      
+      // If we're on the home page URL but seeing 404, force reload
+      if (is404Page && currentPath === expectedPath) {
+        console.log('Detected 404 on home page - forcing reload to fix bfcache issue')
+        window.location.reload()
+      }
+    }
+    
     router.onAfterRouteChanged = (to) => {
       // Wait for DOM to update
       setTimeout(() => {
+        // Check for 404 mismatch
+        checkFor404Mismatch()
+        
         // Find all active navigation links
         const activeLinks = document.querySelectorAll('.VPNavBarMenuLink.active, .VPSidebarItem.is-active a')
         activeLinks.forEach(link => {
@@ -26,6 +43,9 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
     // Run on initial load
     if (router.route.path) {
       setTimeout(() => {
+        // Check for 404 mismatch on initial load
+        checkFor404Mismatch()
+        
         const activeLinks = document.querySelectorAll('.VPNavBarMenuLink.active, .VPSidebarItem.is-active a')
         activeLinks.forEach(link => {
           link.setAttribute('aria-current', 'page')
@@ -34,11 +54,17 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
         // Remove target="_blank" from Tapestry links
         removeTapestryTargetBlank()
       }, 100)
+      
+      // Check again after a longer delay to catch late-rendering 404s
+      setTimeout(() => {
+        checkFor404Mismatch()
+      }, 500)
     }
     
-    // Set up MutationObserver to catch dynamically added links
+    // Set up MutationObserver to catch dynamically added links and 404 pages
     const observer = new MutationObserver(() => {
       removeTapestryTargetBlank()
+      checkFor404Mismatch()
     })
     
     // Start observing when DOM is ready
