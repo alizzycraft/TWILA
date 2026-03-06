@@ -1,18 +1,20 @@
 # TWILA - That's What I'm Looking At
 
-A client-side block identification overlay mod for the Tapestry platform.
+A client-side block and entity identification overlay mod for the Tapestry platform.
 
 ## Overview
 
-TWILA provides real-time identification of blocks under your reticle using client-side raycasting. Built entirely on Tapestry TypeScript-first modding framework, which provides explicit lifecycle management and safe API boundaries.
+TWILA provides real-time identification of blocks and entities under your reticle using client-side raycasting. Built entirely on Tapestry's TypeScript-first modding framework with safe API boundaries and explicit lifecycle management.
 
 ## Features
 
-- **Real-time Block Identification**: Shows block names instantly as you look at them
+- **Real-time Target Identification**: Shows block and entity names instantly as you look at them
+- **Entity Support**: Detects both blocks and entities with position tracking
 - **Client-side Only**: Zero server dependency, works in single-player and multiplayer
-- **Performance Optimized**: Game tick-based raycasting with automatic throttling
-- **Clean UI**: Minimal overlay with monospace font and smooth fade transitions
-- **Tapestry Integration**: Built on Tapestry's explicit lifecycle and type-safe APIs
+- **Performance Optimized**: Game tick-based raycasting with smart miss tracking
+- **Clean UI**: Minimal text overlay at top-center of screen
+- **Robust Error Handling**: Comprehensive diagnostics and graceful degradation
+- **Debug Mode**: Enhanced logging and test overlays for troubleshooting
 
 ## Architecture
 
@@ -20,19 +22,23 @@ TWILA provides real-time identification of blocks under your reticle using clien
 
 TWILA leverages Tapestry's core capabilities:
 
-- **Explicit Lifecycle**: Uses `TS_READY` for initialization and `RUNTIME` for operation
+- **Lifecycle Management**: Uses `activate`/`deactivate` hooks with deferred initialization
 - **Type Safety**: Full TypeScript definitions for all Tapestry APIs
 - **Client APIs**: Uses `tapestry.client.players.raycastBlock()` and `tapestry.client.overlay`
 - **Scheduler**: Game tick integration via `tapestry.scheduler.nextTick()`
-- **UI System**: Mikel templating with UINode structure
+- **State Management**: Internal state machine (INITIALIZING → RUNNING → DISABLED)
 
-### Phase-Based Operation
+### Lifecycle Operation
 
-Tapestry's enforced phases ensure TWILA operates safely:
+TWILA uses a deferred initialization pattern:
 
-1. **TS_READY**: Mod registration and overlay setup
-2. **RUNTIME**: Active raycasting and UI updates
-3. No access to game state before proper initialization
+1. **Mod Registration**: `tapestry.mod.define()` registers the mod with Tapestry
+2. **Activation**: `activate()` function called by Tapestry, exposes global registration function
+3. **API Ready**: Tapestry calls `twilaRegisterEvents()` when client APIs are available
+4. **System Initialization**: Overlay and raycasting systems start
+5. **Runtime**: Continuous raycasting loop with automatic target updates
+
+This approach ensures all Tapestry APIs are fully available before TWILA attempts to use them.
 
 ## Installation
 
@@ -63,28 +69,44 @@ cp twila/build/libs/twila-*.jar ~/.minecraft/mods/
 
 ```
 twila/
-├── mod.json              # Tapestry metadata
-├── fabric.mod.json        # Fabric integration
+├── mod.json              # Tapestry mod metadata
+├── fabric.mod.json       # Fabric loader integration
 ├── src/
-│   ├── index.ts          # Main TypeScript entry
-│   └── main/
-│       └── java/
-│           └── com/
-│               └── twila/
-│                   └── TwilaExtension.java
+│   ├── index.ts          # Main TypeScript entry point
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/twila/  # Java extension (minimal/empty)
+│   │   └── resources/
+│   │       ├── fabric.mod.json
+│   │       └── assets/tapestry/
 ├── dist/                 # Compiled TypeScript output
+│   ├── index.js          # Compiled mod code
+│   ├── index.d.ts        # Type definitions
+│   └── index.js.map      # Source maps
+├── types/                # TypeScript type definitions
+│   ├── index.d.ts
+│   └── tapestry.d.ts     # Tapestry API types
+├── docs/                 # Documentation
+│   ├── events.md         # Event system architecture notes
+│   ├── banner.jpg
+│   └── twila-logo.jpg
+├── build/                # Gradle build output
+│   └── libs/
+│       └── twila-1.0.0.jar
 ├── build.gradle          # Java/TypeScript build configuration
-├── package.json          # Node.js dependencies
-├── tsconfig.json        # TypeScript configuration
-└── README.md            # This file
+├── tsconfig.json         # TypeScript compiler configuration
+├── build-twila.bat/.sh   # Quick build scripts
+├── build-debug.bat/.sh   # Debug build scripts
+├── build-basic.bat       # Minimal build script
+└── README.md             # This file
 ```
 
 ### Building TWILA
 
 #### Prerequisites
-- Node.js 18+ for TypeScript compilation (global installation preferred)
+- Node.js 18+ for TypeScript compilation
 - Gradle 8.0+ for Java build
-- Global TypeScript compiler (`tsc`) for npm-free builds
+- Global TypeScript compiler (`tsc`) recommended
 
 #### Build Commands
 
@@ -98,29 +120,32 @@ tsc --project ./tsconfig.json
 # Build JAR (includes TypeScript output)
 ./gradlew build
 
-# One-command build (Windows) - Interactive
-./build-all.bat
+# Quick build (Windows)
+./build-twila.bat
 
-# One-command build (Linux/Mac) - Interactive
-chmod +x ./build-all.sh && ./build-all.sh
+# Quick build (Linux/Mac)
+chmod +x ./build-twila.sh && ./build-twila.sh
 
-# Debug build (Windows) - Enhanced logging
+# Debug build with enhanced logging (Windows)
 ./build-debug.bat
 
-# Debug build (Linux/Mac) - Enhanced logging  
+# Debug build with enhanced logging (Linux/Mac)
 chmod +x ./build-debug.sh && ./build-debug.sh
+
+# Basic build without extras (Windows)
+./build-basic.bat
 ```
 
 ### Debug Mode
 
-For troubleshooting mod loading issues, use debug builds which provide:
+For troubleshooting mod loading and runtime issues, use debug builds which provide:
 
 #### TWILA Debug Features
-- **Enhanced console logging** with 🔍 TWILA-DEBUG prefix
-- **API availability checks** for all Tapestry components
-- **Detailed error reporting** with timestamps
-- **Test overlay** with high visibility and distinctive styling
-- **Raycast testing** with JSON output
+- **Enhanced console logging** with detailed execution traces
+- **API availability checks** for all Tapestry components at startup
+- **Detailed error reporting** with full stack traces
+- **Raycast result logging** with JSON output for every hit/miss
+- **State transition tracking** (INITIALIZING → RUNNING → DISABLED)
 
 #### Tapestry Debug Features
 - **Platform-level debugging** for core Tapestry functionality
@@ -128,20 +153,19 @@ For troubleshooting mod loading issues, use debug builds which provide:
 - **Development logging** for API interactions
 
 #### JAR Naming
-- **Normal builds**: `twila-1.0.0.jar`, `tapestry-0.0.1.jar`
-- **Debug builds**: `twila-1.0.0-debug.jar`, `tapestry-0.0.1-debug.jar`
+- **Normal builds**: `twila-1.0.0.jar`
+- **Debug builds**: `twila-1.0.0-debug.jar`
 
-Debug logs appear in Minecraft console with `🔍 TWILA-DEBUG:` prefix, making them easy to spot among other log messages.
+Debug logs appear in Minecraft console with `[TWILA]` prefix. Look for startup diagnostics showing API availability and system initialization status.
 
 ### Build Options
 
-The interactive build system (`build-all.bat`) offers several options:
+Available build scripts:
 
-1. **Normal build** - Standard release builds
-2. **Debug build** - TWILA with enhanced logging
-3. **Tapestry debug only** - Platform debug version
-4. **TWILA debug only** - Mod debug version only
-5. **Both debug** - Full debug stack (Tapestry + TWILA)
+1. **build-twila.bat/.sh** - Standard release build
+2. **build-debug.bat/.sh** - Debug build with enhanced logging
+3. **build-basic.bat** - Minimal build without extras
+4. **build-file-test.bat** - Build with file verification
 
 ### Tapestry Platform Building
 
@@ -156,28 +180,62 @@ This downloads the Mikel templating library and builds the core platform.
 
 ## API Usage
 
+### State Management
+
+TWILA uses an internal state machine for robust lifecycle management:
+
+```ts
+enum TwilaState {
+  INITIALIZING = "INITIALIZING",  // Mod loading, APIs not ready
+  RUNNING = "RUNNING",              // Active raycasting and overlay
+  DISABLED = "DISABLED"             // Fatal error or deactivated
+}
+```
+
 ### Client-Side Raycasting
 
 ```ts
 const result = tapestry.client.players.raycastBlock({
-  maxDistance: 32,
-  includeFluids: false
+  maxDistance: 32.0,
+  includeFluids: true
 });
 
 if (result.hit) {
-  console.log(`Found: ${result.blockName} (${result.blockId})`);
+  // Block detection
+  if (result.blockName) {
+    console.log(`Block: ${result.blockName} (${result.blockId})`);
+    console.log(`Position: ${JSON.stringify(result.blockPos)}`);
+  }
+  
+  // Entity detection
+  if (result.entityName) {
+    console.log(`Entity: ${result.entityName} (${result.entityId})`);
+    console.log(`Position: ${JSON.stringify(result.entityPos)}`);
+  }
 }
 ```
 
 ### Overlay System
 
+TWILA uses a simple object-based overlay definition:
+
 ```ts
 const overlay = {
   id: "twila-overlay",
   anchor: "TOP_CENTER",
-  render: () => {
-    const template = `<div class="twila-overlay">{{blockName}}</div>`;
-    return tapestry.client.overlay.template(template, { blockName });
+  zIndex: 10,
+  visible: true,
+  render: function(ctx) {
+    if (currentTarget) {
+      return {
+        type: "text",
+        content: currentTarget.blockName,
+        x: 0,
+        y: 8,
+        color: "#FFFFFF"
+      };
+    }
+    return null;
   }
 };
 
@@ -187,45 +245,89 @@ tapestry.client.overlay.register(overlay);
 ### Game Tick Integration
 
 ```ts
-const raycastLoop = (context) => {
-  // Perform raycast
-  const result = tapestry.client.players.raycastBlock(options);
+function raycastLoop() {
+  if (twilaState !== TwilaState.RUNNING) return;
   
-  // Update overlay
-  updateOverlay(result);
+  // Perform raycast
+  const result = tapestry.client.players.raycastBlock({
+    maxDistance: 32.0,
+    includeFluids: true
+  });
+  
+  // Process result
+  if (result.hit) {
+    currentTarget = {
+      blockName: result.blockName || result.entityName,
+      blockId: result.blockId || result.entityId,
+      targetType: result.entityId ? "entity" : "block",
+      position: result.blockPos || result.entityPos
+    };
+  }
   
   // Schedule next tick
   tapestry.scheduler.nextTick(raycastLoop);
-};
+}
+```
 
-tapestry.scheduler.nextTick(raycastLoop);
+### Smart Miss Tracking
+
+TWILA implements consecutive miss tracking to prevent flickering:
+
+```ts
+const MISS_CLEAR_THRESHOLD = 4;
+let consecutiveMisses = 0;
+
+if (!result.hit) {
+  consecutiveMisses++;
+  if (consecutiveMisses >= MISS_CLEAR_THRESHOLD) {
+    currentTarget = null;  // Clear after 4 consecutive misses
+  }
+} else {
+  consecutiveMisses = 0;  // Reset on hit
+}
 ```
 
 ## Configuration
 
-TWILA currently uses hardcoded values from the technical specification:
+TWILA currently uses hardcoded configuration values:
 
-- **Update Rate**: Every game tick (20Hz)
-- **Max Distance**: 32 blocks
-- **UI Anchor**: Top-center with 20px offset
-- **Fade Duration**: 250ms
+- **Update Rate**: Every game tick (20Hz via scheduler)
+- **Max Distance**: 32.0 blocks
+- **Include Fluids**: true (water, lava detection enabled)
+- **UI Anchor**: TOP_CENTER
+- **UI Offset**: x: 0, y: 8 pixels
+- **Text Color**: #FFFFFF (white)
+- **Miss Threshold**: 4 consecutive misses before clearing target
+- **Z-Index**: 10
 
-Future versions may include configuration options.
+### Debug Flags
+
+For development, you can modify these flags in `src/index.ts`:
+
+```ts
+const DEBUG_DISABLE_RAYCAST = false;  // Disable raycasting system
+const DEBUG_DISABLE_OVERLAY = false;  // Disable overlay system
+```
+
+Future versions may include runtime configuration options.
 
 ## Performance
 
 ### Optimizations
 
-- **Game Tick Scheduling**: Respects Minecraft's natural timing
-- **Conditional Updates**: UI only updates when target changes
-- **Memory Efficient**: No persistent object references
+- **Game Tick Scheduling**: Respects Minecraft's natural timing via `scheduler.nextTick()`
+- **Smart Miss Tracking**: Prevents flickering with 4-tick threshold
+- **Conditional Rendering**: Overlay returns null when no target
+- **Memory Efficient**: Single target object, no persistent collections
 - **Client-Side Only**: No network overhead
+- **Graceful Degradation**: Fatal errors disable systems cleanly
 
 ### Benchmarks
 
-- **Raycast Cost**: < 5ms per tick
-- **Memory Usage**: Minimal (stores only current target)
-- **UI Updates**: Only when block ID changes
+- **Raycast Cost**: < 5ms per tick (client-side only)
+- **Memory Usage**: Minimal (single TargetData object)
+- **UI Updates**: Automatic via overlay render function
+- **State Transitions**: Instant with fail-fast error handling
 
 ## Troubleshooting
 
@@ -235,32 +337,69 @@ Future versions may include configuration options.
    - Verify Tapestry JAR is in mods folder
    - Check Java 21 is being used
    - Ensure Fabric Loader is up to date
+   - Look for `[TWILA] Starting activation...` in console
 
 2. **No Overlay Displayed**
-   - Check console for registration messages
-   - Verify client-side raycast is working
-   - Check overlay anchor and visibility
+   - Check for `[TWILA] Overlay registration successful` in logs
+   - Verify `[TWILA] All systems initialized successfully`
+   - Ensure raycasting is working (look for raycast result logs)
+   - Check that `twilaState` is RUNNING
 
-3. **Build Failures**
+3. **APIs Not Available**
+   - Look for `[TWILA] Global registration function called` in logs
+   - Check API availability diagnostics at startup
+   - Verify Tapestry version compatibility
+   - Ensure `twilaRegisterEvents()` is being called
+
+4. **Build Failures**
    - Install TypeScript globally: `npm install -g typescript`
    - Clean with `./gradlew clean build`
-   - Verify TypeScript compiler is available: `tsc --version`
+   - Verify TypeScript compiler: `tsc --version`
+   - Check that `dist/` directory is created after tsc
 
 ### Debug Information
 
-TWILA logs to console:
-- `"TWILA loading..."` - Mod initialization
-- `"TWILA enabled"` - Runtime start
-- `"TWILA overlay shown: [block]"` - Target detection
-- `"TWILA overlay hidden"` - Target lost
+TWILA logs comprehensive diagnostics to console:
+
+**Startup:**
+- `[TWILA] Starting activation...` - Mod initialization begins
+- `[TWILA] === TWILA ENVIRONMENT ===` - API availability check
+- `[TWILA] Global registration function called` - APIs ready
+- `[TWILA] All systems initialized successfully` - Ready to run
+
+**Runtime:**
+- `[TWILA] === RAYCAST LOOP ENTRY ===` - Each tick (if verbose logging enabled)
+- `[TWILA] Raycast result: {...}` - Hit/miss detection
+- `[TWILA] Target updated: {...}` - New target acquired
+
+**Errors:**
+- `[TWILA:FATAL]` - Critical error, mod disabled
+- `[TWILA] Error details:` - Full error context with stack trace
+
+### State Inspection
+
+Check current state in logs:
+- `twilaState: INITIALIZING` - Still loading
+- `twilaState: RUNNING` - Operating normally
+- `twilaState: DISABLED` - Fatal error occurred
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Follow the technical specification in `docs/tech_spec.md`
-4. Test with both single-player and multiplayer
-5. Submit a pull request
+3. Follow the existing code structure and patterns
+4. Add comprehensive logging for debugging
+5. Test with both single-player and multiplayer
+6. Ensure TypeScript compiles without errors
+7. Submit a pull request
+
+### Code Style
+
+- Use TypeScript strict mode
+- Add JSDoc comments for public functions
+- Follow the state machine pattern for lifecycle
+- Use adapter functions for all Tapestry API calls
+- Implement fail-fast error handling with `fatal()`
 
 ## License
 
@@ -269,5 +408,4 @@ AGPL-3.0 License - see LICENSE file for details.
 ## Credits
 
 - **Tapestry Platform**: Core TypeScript-first modding framework
-- **Mikel**: Template processing library
 - **Fabric Loader**: Minecraft mod loading system
