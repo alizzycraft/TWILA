@@ -36,18 +36,41 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
       }, 100)
     }
     
-    // Also run on mount
-    setTimeout(() => {
+    // Set up MutationObserver to catch dynamically added links
+    const observer = new MutationObserver(() => {
       removeTapestryTargetBlank()
-    }, 500)
+    })
+    
+    // Start observing when DOM is ready
+    if (document.body) {
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      })
+    } else {
+      window.addEventListener('DOMContentLoaded', () => {
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true
+        })
+      })
+    }
+    
+    // Also run on mount with multiple delays to catch all scenarios
+    setTimeout(() => removeTapestryTargetBlank(), 100)
+    setTimeout(() => removeTapestryTargetBlank(), 500)
+    setTimeout(() => removeTapestryTargetBlank(), 1000)
+    setTimeout(() => removeTapestryTargetBlank(), 2000)
   }
 }
 
 function removeTapestryTargetBlank() {
   // Find all links to Tapestry docs
-  const tapestryLinks = document.querySelectorAll('a[href*="https://alizzycraft.github.io/tapestry/"]')
+  const tapestryLinks = document.querySelectorAll('a[href*="alizzycraft.github.io/tapestry"]')
   tapestryLinks.forEach(link => {
-    link.removeAttribute('target')
-    link.removeAttribute('rel')
+    if (link.getAttribute('target') === '_blank') {
+      link.removeAttribute('target')
+      link.removeAttribute('rel')
+    }
   })
 }
