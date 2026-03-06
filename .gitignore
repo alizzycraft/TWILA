@@ -7,3 +7,4 @@ dist/
 /.gradle
 /build/libs
 /build
+/docs-site/docs/.vitepress/cache
