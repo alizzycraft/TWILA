@@ -17,6 +17,9 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
         inactiveLinks.forEach(link => {
           link.removeAttribute('aria-current')
         })
+        
+        // Remove target="_blank" from Tapestry links
+        removeTapestryTargetBlank()
       }, 100)
     }
     
@@ -27,7 +30,24 @@ export function enhanceApp({ app, router }: EnhanceAppContext) {
         activeLinks.forEach(link => {
           link.setAttribute('aria-current', 'page')
         })
+        
+        // Remove target="_blank" from Tapestry links
+        removeTapestryTargetBlank()
       }, 100)
     }
+    
+    // Also run on mount
+    setTimeout(() => {
+      removeTapestryTargetBlank()
+    }, 500)
   }
+}
+
+function removeTapestryTargetBlank() {
+  // Find all links to Tapestry docs
+  const tapestryLinks = document.querySelectorAll('a[href*="alizzycraft.github.io/tapestry"]')
+  tapestryLinks.forEach(link => {
+    link.removeAttribute('target')
+    link.removeAttribute('rel')
+  })
 }
