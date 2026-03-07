@@ -30,8 +30,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
       
+      - name: Install TypeScript
+        run: npm install -g typescript
+      
       - name: Build TypeScript
-        run: npx tsc --project ./tsconfig.json
+        run: tsc --project ./tsconfig.json
       
       - name: Build JAR
         run: gradle build
