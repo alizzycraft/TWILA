@@ -30,6 +30,14 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
       
+      - name: Extract version from tag
+        id: get_version
+        run: |
+          # Remove 'v' prefix from tag (e.g., v1.0.0-beta -> 1.0.0-beta)
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+      
       - name: Install TypeScript
         run: npm install -g typescript
       
@@ -37,7 +45,7 @@ jobs:
         run: tsc --project ./tsconfig.json
       
       - name: Build JAR
-        run: gradle build -x compileTypeScript
+        run: gradle build -x compileTypeScript -Pversion=${{ steps.get_version.outputs.version }}
       
       - name: Cleanup intermediate JARs
         run: rm -f build/libs/*-sources.jar
