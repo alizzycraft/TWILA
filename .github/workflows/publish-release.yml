@@ -1,0 +1,67 @@
+name: Publish Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+      
+      - name: Build TypeScript
+        run: npx tsc --project ./tsconfig.json
+      
+      - name: Build JAR
+        run: ./gradlew build
+      
+      - name: Cleanup intermediate JARs
+        run: rm -f build/libs/*-sources.jar
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/libs/twila-*.jar
+          prerelease: true
+          generate_release_notes: true
+          name: Twila ${{ github.ref_name }} (Beta)
+          body: |
+            ## Twila Minecraft Mod
+            
+            This is a beta release of the Twila mod.
+            
+            ### Installation
+            1. Download the `twila-*.jar` file.
+            2. Place it in your Minecraft `mods` folder.
+            3. Ensure you have the Fabric Loader, Fabric API, and Tapestry installed for Minecraft 1.21.11.
+            
+            ### Requirements
+            - Minecraft 1.21.11
+            - Fabric Loader 0.15.11+
+            - Fabric API 0.100.1+1.21.11
+            - Tapestry 1.0.0
