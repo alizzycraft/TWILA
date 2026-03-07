@@ -39,7 +39,7 @@ export default defineConfig({
     nav: [
       { text: 'Download the latest version', link: 'https://github.com/alizzycraft/twila/releases/latest' },
       { text: '', link: '' },
-      { text: 'Tapestry', link: 'https://alizzycraft.github.io/tapestry/' }
+      { text: 'Tapestry', link: 'https://alizzycraft.github.io/tapestry/', target: '_self' }
     ],
 
     sidebar: undefined,

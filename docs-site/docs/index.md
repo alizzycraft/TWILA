@@ -18,6 +18,7 @@ hero:
     - theme: alt
       text: Tapestry API
       link: https://alizzycraft.github.io/tapestry/
+      target: _self
 
 features:
   - title: Real-time Target Identification
