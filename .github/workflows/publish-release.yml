@@ -37,7 +37,7 @@ jobs:
         run: tsc --project ./tsconfig.json
       
       - name: Build JAR
-        run: gradle build
+        run: gradle build -x compileTypeScript
       
       - name: Cleanup intermediate JARs
         run: rm -f build/libs/*-sources.jar
