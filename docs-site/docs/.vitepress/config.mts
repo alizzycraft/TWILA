@@ -29,11 +29,7 @@ export default defineConfig({
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/TWILA/favicon.svg' }],
     ['link', { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/TWILA/favicon-32x32.png' }],
     ['link', { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/TWILA/favicon-16x16.png' }],
-    ['link', { rel: 'shortcut icon', href: '/TWILA/favicon.ico' }],
-    // Prevent bfcache by disabling caching
-    ['meta', { 'http-equiv': 'Cache-Control', content: 'no-cache, no-store, must-revalidate' }],
-    ['meta', { 'http-equiv': 'Pragma', content: 'no-cache' }],
-    ['meta', { 'http-equiv': 'Expires', content: '0' }]
+    ['link', { rel: 'shortcut icon', href: '/TWILA/favicon.ico' }]
   ],
 
   themeConfig: {
@@ -43,7 +39,7 @@ export default defineConfig({
     nav: [
       { text: 'Download the latest version', link: 'https://github.com/alizzycraft/twila/releases/latest' },
       { text: '', link: '' },
-      { text: 'Tapestry', link: 'https://alizzycraft.github.io/tapestry/' }
+      { text: 'Tapestry', link: 'https://alizzycraft.github.io/tapestry/', target: '_self' }
     ],
 
     sidebar: undefined,
