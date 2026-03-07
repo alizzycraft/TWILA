@@ -30,14 +30,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
       
-      - name: Make gradlew executable
-        run: chmod +x gradlew
-      
       - name: Build TypeScript
         run: npx tsc --project ./tsconfig.json
       
       - name: Build JAR
-        run: ./gradlew build
+        run: gradle build
       
       - name: Cleanup intermediate JARs
         run: rm -f build/libs/*-sources.jar
